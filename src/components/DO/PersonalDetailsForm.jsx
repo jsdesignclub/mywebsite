@@ -8,12 +8,20 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Personal Information</h2>
-          <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>Enter legal identity and contact details for the applicant.</p>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        flexWrap: 'wrap', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '2rem',
+        gap: '1rem'
+      }}>
+        <div style={{ minWidth: '200px', flex: '1' }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>Personal Information</h2>
+          <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>Enter legal identity and contact details for the applicant.</p>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '250px' }}>
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
           <input 
             type="text" 
@@ -25,7 +33,7 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
               borderRadius: '20px',
               color: '#fff',
               fontSize: '0.85rem',
-              width: '200px'
+              width: '100%'
             }} 
           />
         </div>
@@ -34,10 +42,10 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
       <div 
         className="grid-2"
         style={{
-          marginTop: '2rem'
+          marginTop: '1.5rem'
         }}
       >
-        <div className="form-group" style={{ gridColumn: 'span 1' }}>
+        <div className="form-group">
           <label style={labelStyle}>Full Name (As per NIC)</label>
           <input type="text" name="fullName" value={data.fullName || ''} onChange={handleChange} style={inputStyle} placeholder="eg: Mahagamage Perera" />
         </div>
@@ -85,7 +93,7 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
           </select>
         </div>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>Permanent Address</label>
           <textarea name="address" value={data.address || ''} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} placeholder="No, Street, City" />
         </div>
@@ -119,20 +127,22 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
         </div>
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <button 
           onClick={onNext}
           style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.8rem',
-            padding: '0.8rem 2rem',
+            padding: '1rem 2rem',
             background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '10px',
             color: '#fff',
-            fontWeight: 600,
-            cursor: 'pointer'
+            fontWeight: 700,
+            cursor: 'pointer',
+            width: window.innerWidth < 768 ? '100%' : 'auto'
           }}
         >
           Next: Business Details

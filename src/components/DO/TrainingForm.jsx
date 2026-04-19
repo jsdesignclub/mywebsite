@@ -9,30 +9,31 @@ function TrainingForm({ data, onUpdate, onPrev, onNext }) {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Training & Qualifications</h2>
-        <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>Crucial for scoring. Provide professional certifications and educational background.</p>
+        <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>Training & Qualifications</h2>
+        <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>Provide professional certifications and educational background.</p>
       </div>
 
       <div className="grid-2" style={{
-        marginTop: '2rem'
+        marginTop: '1.5rem'
       }}>
-        <div className="form-group" style={{ gridColumn: 'span 1' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>NVQ Level (if applicable)</label>
-          <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
             {[1, 2, 3, 4, 5, 6, 7].map(level => (
               <button
                 key={level}
                 type="button"
                 onClick={() => onUpdate({ ...data, nvqLevel: level })}
                 style={{
-                  padding: '1rem',
-                  borderRadius: '12px',
+                  padding: '0.8rem',
+                  borderRadius: '10px',
                   background: data.nvqLevel === level ? 'rgba(31, 78, 121, 0.4)' : 'rgba(255,255,255,0.03)',
                   border: data.nvqLevel === level ? '2px solid #2e75b6' : '1px solid rgba(255,255,255,0.1)',
                   color: data.nvqLevel === level ? '#fff' : '#94a3b8',
-                  minWidth: '60px',
+                  minWidth: '50px',
                   cursor: 'pointer',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  fontSize: '0.85rem'
                 }}
               >
                 L{level}
@@ -42,12 +43,14 @@ function TrainingForm({ data, onUpdate, onPrev, onNext }) {
               type="button"
               onClick={() => onUpdate({ ...data, nvqLevel: 'none' })}
               style={{
-                padding: '1rem',
-                borderRadius: '12px',
+                padding: '0.8rem 1rem',
+                borderRadius: '10px',
                 background: data.nvqLevel === 'none' ? 'rgba(244, 63, 94, 0.1)' : 'rgba(255,255,255,0.03)',
                 border: data.nvqLevel === 'none' ? '2px solid #f43f5e' : '1px solid rgba(255,255,255,0.1)',
                 color: data.nvqLevel === 'none' ? '#f43f5e' : '#475569',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.85rem'
               }}
             >
               None
@@ -71,24 +74,58 @@ function TrainingForm({ data, onUpdate, onPrev, onNext }) {
           <input type="number" name="experienceYears" value={data.experienceYears || ''} onChange={handleChange} style={inputStyle} min="0" />
         </div>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>Other Related Training Programs</label>
           <textarea 
             name="otherTraining" 
             value={data.otherTraining || ''} 
             onChange={handleChange} 
             style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
-            placeholder="List any workshops, short courses, or vocational training relevant to the business..." 
+            placeholder="Workshops, short courses, or vocational training..." 
           />
         </div>
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onPrev} style={secondaryBtn}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between' }}>
+        <button 
+          onClick={onPrev} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '10px',
+            color: '#cbd5e1',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '120px'
+          }}
+        >
           <ArrowLeft size={18} /> Back
         </button>
-        <button onClick={onNext} style={primaryBtn}>
-          Next: Production <ArrowRight size={18} />
+        <button 
+          onClick={onNext} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '200px'
+          }}
+        >
+          Next Step <ArrowRight size={18} />
         </button>
       </div>
     </div>

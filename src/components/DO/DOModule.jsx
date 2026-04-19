@@ -235,15 +235,15 @@ function DOModule({ initialData, onComplete }) {
       case 'history':
         return (
           <div style={{ textAlign: 'left' }}>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>Final Review & Submission</h2>
-            <p style={{ color: '#64748b', marginBottom: '2rem' }}>Please verify all entries before submitting to the Divisional Secretary. This action creates a permanent audit log.</p>
+            <h2 style={{ fontSize: 'clamp(1.4rem, 5vw, 1.8rem)', marginBottom: '1rem' }}>Final Review & Submission</h2>
+            <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.9rem', lineHeight: '1.5' }}>Please verify all entries before submitting to the Divisional Secretary. This action creates a permanent audit log.</p>
             
-            <div className="glass" style={{ padding: '2rem', marginBottom: '2rem', border: '1px dashed rgba(16, 185, 129, 0.3)' }}>
+            <div className="glass" style={{ padding: '1.5rem', marginBottom: '2.5rem', border: '1px dashed rgba(16, 185, 129, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: '#10b981' }}>
-                <CheckCircle2 size={32} />
+                <CheckCircle2 size={32} style={{ flexShrink: 0 }} />
                 <div>
-                  <h4 style={{ margin: 0 }}>Ready for Processing</h4>
-                  <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.8 }}>All mandatory sections have been completed.</p>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem' }}>Ready for Processing</h4>
+                  <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8 }}>All mandatory sections have been completed.</p>
                 </div>
               </div>
             </div>
@@ -251,19 +251,20 @@ function DOModule({ initialData, onComplete }) {
             <button 
               style={{
                 width: '100%',
-                padding: '1.5rem',
+                padding: '1.2rem',
                 background: isSubmitting ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                 border: 'none',
                 borderRadius: '12px',
                 color: '#fff',
-                fontSize: '1.2rem',
+                fontSize: 'clamp(1rem, 4vw, 1.2rem)',
                 fontWeight: 700,
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '1rem',
-                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.2)'
+                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.2)',
+                marginBottom: '2rem'
               }}
               onClick={handleSubmit}
               disabled={isSubmitting}
@@ -271,7 +272,7 @@ function DOModule({ initialData, onComplete }) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="animate-spin" size={24} />
-                  {submissionStatus}
+                  <span style={{ fontSize: '0.9rem' }}>{submissionStatus}</span>
                 </>
               ) : (
                 <>

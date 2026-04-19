@@ -38,17 +38,17 @@ function BusinessDetailsForm({ data, onUpdate, onPrev, onNext }) {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Business Details</h2>
-        <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>Provide information about the applicant's existing venture.</p>
+        <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>Business Details</h2>
+        <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>Provide information about the applicant's existing venture.</p>
       </div>
 
       <div 
         className="grid-2"
         style={{
-          marginTop: '2rem'
+          marginTop: '1.5rem'
         }}
       >
-        <div className="form-group" style={{ gridColumn: 'span 1' }}>
+        <div className="form-group">
           <label style={labelStyle}>Registered Business Name</label>
           <input type="text" name="businessName" value={data.businessName || ''} onChange={handleChange} style={inputStyle} placeholder="eg: S&M Carpentry Solutions" />
         </div>
@@ -110,42 +110,48 @@ function BusinessDetailsForm({ data, onUpdate, onPrev, onNext }) {
         </div>
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between' }}>
         <button 
           onClick={onPrev}
           style={{
+            flexGrow: 1,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.8rem',
-            padding: '0.8rem 2rem',
+            padding: '1rem 1.5rem',
             background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '8px',
+            borderRadius: '10px',
             color: '#cbd5e1',
-            fontWeight: 600,
-            cursor: 'pointer'
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '150px'
           }}
         >
           <ArrowLeft size={18} />
-          Back: Personal Info
+          Back
         </button>
 
         <button 
           onClick={onNext}
           style={{
+            flexGrow: 1,
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.8rem',
-            padding: '0.8rem 2rem',
+            padding: '1rem 1.5rem',
             background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '10px',
             color: '#fff',
-            fontWeight: 600,
-            cursor: 'pointer'
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '200px'
           }}
         >
-          Next: Training & Qualifications
+          Next Step
           <ArrowRight size={18} />
         </button>
       </div>

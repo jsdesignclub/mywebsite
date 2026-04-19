@@ -9,17 +9,17 @@ function ProductionForm({ data, onUpdate, onPrev, onNext }) {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Production & Capacity</h2>
-        <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>Analyze business viability and market potential.</p>
+        <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>Production & Capacity</h2>
+        <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>Analyze business viability and market potential.</p>
       </div>
 
       <div className="grid-2">
-        <div className="form-group" style={{ gridColumn: 'span 1' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>Main Products / Services</label>
           <input type="text" name="products" value={data.products || ''} onChange={handleChange} style={inputStyle} placeholder="eg: Bed frames, Office desks, Kitchen cabinets" />
         </div>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>Required Raw Materials</label>
           <textarea name="rawMaterials" value={data.rawMaterials || ''} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px' }} placeholder="Timber, Glue, Sandpaper, Vernish etc." />
         </div>
@@ -44,7 +44,7 @@ function ProductionForm({ data, onUpdate, onPrev, onNext }) {
           <input type="number" name="assetValue" value={data.assetValue || ''} onChange={handleChange} style={inputStyle} placeholder="1,200,000" />
         </div>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={{ ...labelStyle, color: '#10b981' }}>Auto-Calculated Net Monthly Profit (LKR)</label>
           <div style={{
             ...inputStyle,
@@ -62,12 +62,46 @@ function ProductionForm({ data, onUpdate, onPrev, onNext }) {
         </div>
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onPrev} style={secondaryBtn}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between' }}>
+        <button 
+          onClick={onPrev} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '10px',
+            color: '#cbd5e1',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '120px'
+          }}
+        >
           <ArrowLeft size={18} /> Back
         </button>
-        <button onClick={onNext} style={primaryBtn}>
-          Next: Equipment Request <ArrowRight size={18} />
+        <button 
+          onClick={onNext} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '200px'
+          }}
+        >
+          Next Step <ArrowRight size={18} />
         </button>
       </div>
     </div>

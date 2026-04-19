@@ -62,21 +62,21 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
   return (
     <div>
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ margin: 0, fontSize: '1.8rem' }}>Equipment Request</h2>
-        <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>List the machinery or equipment for which the 50% contribution is requested.</p>
+        <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>Equipment Request</h2>
+        <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>List the machinery or equipment for which the 50% contribution is requested.</p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {items.map((item, index) => (
           <div key={item.id} className="glass" style={{ 
-            padding: '2rem', 
+            padding: '1.5rem', 
             background: 'rgba(255,255,255,0.01)',
             display: 'flex',
             flexDirection: 'column',
             gap: '1.5rem',
             border: '1px solid rgba(255,255,255,0.05)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div className="grid-2">
               <div className="form-group">
                 <label style={labelStyle}>Equipment Name</label>
                 <input 
@@ -109,7 +109,7 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 1fr 50px', gap: '1rem', alignItems: 'end' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', alignItems: 'end' }}>
               <div className="form-group">
                 <label style={labelStyle}>Qty</label>
                 <input 
@@ -156,7 +156,7 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
                   }}>
                     {item.quotationFile ? <FileCheck size={16} /> : <Upload size={16} />}
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.quotationFile ? item.quotationFile.name : 'Choose PDF/Image'}
+                      {item.quotationFile ? item.quotationFile.name : 'Quotation'}
                     </span>
                   </div>
                 </div>
@@ -187,7 +187,8 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
                   borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  height: '48px'
                 }}
               >
                 <Trash2 size={20} />
@@ -204,16 +205,18 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          padding: '0.7rem 1.5rem',
+          padding: '0.8rem 1.5rem',
           background: 'rgba(16, 185, 129, 0.1)',
           border: '1px solid rgba(16, 185, 129, 0.2)',
-          borderRadius: '8px',
+          borderRadius: '10px',
           color: '#10b981',
-          fontWeight: 600,
-          cursor: 'pointer'
+          fontWeight: 700,
+          cursor: 'pointer',
+          width: window.innerWidth < 768 ? '100%' : 'auto',
+          justifyContent: 'center'
         }}
       >
-        <Plus size={18} /> Add Item
+        <Plus size={18} /> Add New Equipment
       </button>
 
       <div className="glass" style={{ 
@@ -224,20 +227,20 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
         gap: '1.5rem',
         background: 'rgba(59, 130, 246, 0.05)'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '3rem', alignItems: 'center' }}>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Total Project Value</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>LKR {calculateTotal().toLocaleString()}</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '1.5rem', alignItems: 'center' }}>
+          <div style={{ textAlign: 'left', minWidth: '150px', flex: '1' }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Total Project Value</p>
+            <h3 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', color: '#fff' }}>LKR {calculateTotal().toLocaleString()}</h3>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Dept. Grant ({policy.percentage}%)</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: '#10b981' }}>
+          <div style={{ textAlign: 'left', minWidth: '150px', flex: '1' }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Dept. Grant ({policy.percentage}%)</p>
+            <h3 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', color: '#10b981' }}>
               {loadingPolicy ? <Loader2 className="animate-spin" size={20} /> : `LKR ${calculateGrant().toLocaleString()}`}
             </h3>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Applicant Bore</p>
-            <h3 style={{ margin: 0, fontSize: '1.8rem', color: '#3b82f6' }}>
+          <div style={{ textAlign: 'left', minWidth: '150px', flex: '1' }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Applicant Share</p>
+            <h3 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', color: '#3b82f6' }}>
               {loadingPolicy ? '...' : `LKR ${(calculateTotal() - calculateGrant()).toLocaleString()}`}
             </h3>
           </div>
@@ -246,17 +249,51 @@ function EquipmentForm({ data, onUpdate, onPrev, onNext }) {
         {calculateTotal() * (policy.percentage / 100) > policy.maxAmount && (
           <div style={{ padding: '0.8rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
             <Info size={18} color="#f59e0b" />
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#f59e0b' }}>The maximum grant limit of LKR {policy.maxAmount.toLocaleString()} has been reached. Remaining costs must be borne by the applicant.</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#f59e0b' }}>The maximum grant limit has been reached. Remaining costs must be borne by the applicant.</p>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'space-between' }}>
-        <button onClick={onPrev} style={secondaryBtn}>
+      <div style={{ marginTop: '3rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between' }}>
+        <button 
+          onClick={onPrev} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '10px',
+            color: '#cbd5e1',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '120px'
+          }}
+        >
           <ArrowLeft size={18} /> Back
         </button>
-        <button onClick={onNext} style={primaryBtn}>
-          Next: History & Submission <ArrowRight size={18} />
+        <button 
+          onClick={onNext} 
+          style={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem',
+            padding: '1rem 1.5rem',
+            background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#fff',
+            fontWeight: 700,
+            cursor: 'pointer',
+            minWidth: '200px'
+          }}
+        >
+          Final Steps <ArrowRight size={18} />
         </button>
       </div>
     </div>
