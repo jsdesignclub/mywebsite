@@ -8,6 +8,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Download, Filter } from 'lucide-react';
 
+const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' };
+const tdStyle = { padding: '1.2rem 1.5rem' };
+const labelStyle = { display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#94a3b8' };
+const inputStyle = { width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', boxSizing: 'border-box' };
+const selectStyle = { padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff' };
+const addBtnStyle = { background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)', color: '#fff', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, cursor: 'pointer' };
+const searchStyle = { width: '100%', padding: '1rem 1rem 1rem 3rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none' };
+const avatarStyle = { width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' };
+const modalOverlayStyle = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
+const modalContentStyle = { width: '100%', maxWidth: '500px', padding: '3rem', background: '#0c111d', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' };
+
 function AdminModule({ activeTab: externalTab }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -894,15 +905,5 @@ function AdminModule({ activeTab: externalTab }) {
   );
 }
 
-const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' };
-const tdStyle = { padding: '1.2rem 1.5rem' };
-const labelStyle = { display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: '#94a3b8' };
-const inputStyle = { width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', boxSizing: 'border-box' };
-const selectStyle = { padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff' };
-const addBtnStyle = { background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)', color: '#fff', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, cursor: 'pointer' };
-const searchStyle = { width: '100%', padding: '1rem 1rem 1rem 3rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none' };
-const avatarStyle = { width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' };
-const modalOverlayStyle = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modalContentStyle = { width: '100%', maxWidth: '500px', padding: '3rem', background: '#0c111d', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)' };
 
 export default AdminModule;

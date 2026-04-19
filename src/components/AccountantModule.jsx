@@ -6,6 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' };
+const tdStyle = { padding: '1.2rem 1.5rem', fontSize: '0.9rem' };
+const inputStyle = { width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' };
+const selectStyle = { padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none', cursor: 'pointer' };
+const viewBtnStyle = { background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 };
+const mainBtnStyle = { background: '#3b82f6', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
+const secondaryBtnStyle = { background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
+
 function AccountantModule({ statusFilter = 'approved' }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -363,12 +371,5 @@ function AccountantModule({ statusFilter = 'approved' }) {
   );
 }
 
-const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' };
-const tdStyle = { padding: '1.2rem 1.5rem', fontSize: '0.9rem' };
-const inputStyle = { width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' };
-const selectStyle = { padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none', cursor: 'pointer' };
-const viewBtnStyle = { background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 };
-const mainBtnStyle = { background: '#3b82f6', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
-const secondaryBtnStyle = { background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
 
 export default AccountantModule;
