@@ -61,7 +61,7 @@ function AdminModule({ activeTab: externalTab }) {
     const headers = [
       "No", "Application ID", "Applicant Name", "Business Name", "Phone", 
       "Address", "Divisional Secretariat", "GS Division", "Development Officer", 
-      "Equipment Requested", "Model No", "Brand", "Viability Score", "Total Asset Cost", "Approved Grant Amount"
+      "Equipment Requested", "Model No", "Brand", "Process Status", "Viability Score", "Total Asset Cost", "Approved Grant Amount"
     ];
     
     const csvData = filtered.map((app, i) => {
@@ -79,6 +79,7 @@ function AdminModule({ activeTab: externalTab }) {
         `"${equip.name || ''}"`,
         `"${equip.model || ''}"`,
         `"${equip.brand || ''}"`,
+        `"${app.status === 'approved' ? 'Authorized' : app.status}"`,
         app.score || 0,
         app.equipment?.totalGrant * 2 || 0,
         app.equipment?.totalGrant || 0
@@ -128,7 +129,7 @@ function AdminModule({ activeTab: externalTab }) {
           app.personal?.gsDivision || "-",
           app.officer?.email?.split('@')[0] || "-",
           equip.name || "-",
-          equip.model || "-",
+          app.status === 'approved' ? 'Authorized' : app.status,
           (app.score || 0).toString(),
           (app.equipment?.totalGrant * 2 || 0).toLocaleString(),
           (app.equipment?.totalGrant || 0).toLocaleString()
@@ -137,7 +138,7 @@ function AdminModule({ activeTab: externalTab }) {
 
       autoTable(doc, {
         startY: 45,
-        head: [["#", "ID", "Name", "Business", "Phone", "Division", "GS Div", "DO", "Equipment", "Model", "Score", "Total Cost", "Grant"]],
+        head: [["#", "ID", "Name", "Business", "Phone", "Division", "GS Div", "DO", "Equipment", "Phase", "Score", "Total Cost", "Grant"]],
         body: tableData,
         theme: 'grid',
         headStyles: { fillColor: [31, 78, 121], textColor: [255, 255, 255], fontSize: 8 },
@@ -193,7 +194,11 @@ function AdminModule({ activeTab: externalTab }) {
   const fetchApprovedApps = async () => {
     setAppsLoading(true);
     try {
-      const q = query(collection(db, 'applications'), where('status', '==', 'approved'));
+      // Fetch all applications that are Approved and beyond (Ordered, Completed)
+      const q = query(
+        collection(db, 'applications'), 
+        where('status', 'in', ['approved', 'ordered', 'completed'])
+      );
       const snap = await getDocs(q);
       setApprovedApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) { console.error(err); }
@@ -448,6 +453,7 @@ function AdminModule({ activeTab: externalTab }) {
                   <th style={thStyle}>Equipment</th>
                   <th style={thStyle}>Model</th>
                   <th style={thStyle}>Brand</th>
+                  <th style={thStyle}>Grant Phase</th>
                   <th style={thStyle}>Score</th>
                   <th style={thStyle}>Total Cost</th>
                   <th style={thStyle}>Grant</th>
@@ -476,6 +482,21 @@ function AdminModule({ activeTab: externalTab }) {
                       <td style={tdStyle}>{firstItem.name || 'N/A'}</td>
                       <td style={tdStyle}>{firstItem.model || '-'}</td>
                       <td style={tdStyle}>{firstItem.brand || '-'}</td>
+                      <td style={tdStyle}>
+                        <div style={{ 
+                          padding: '4px 10px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.65rem', 
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          background: app.status === 'completed' ? 'rgba(16, 185, 129, 0.1)' : app.status === 'ordered' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                          color: app.status === 'completed' ? '#10b981' : app.status === 'ordered' ? '#3b82f6' : '#f59e0b',
+                          border: `1px solid ${app.status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : app.status === 'ordered' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                          textTransform: 'uppercase'
+                        }}>
+                          {app.status === 'approved' ? 'Authorization' : app.status}
+                        </div>
+                      </td>
                       <td style={tdStyle}>
                         <span style={{ fontWeight: 800, color: '#10b981' }}>{app.score}</span>
                       </td>
@@ -513,7 +534,7 @@ function AdminModule({ activeTab: externalTab }) {
                 <h3 style={{ margin: '0 0 0.5rem', color: '#94a3b8' }}>No Records Found</h3>
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
                   {approvedApps.length === 0 
-                    ? "Currently, there are no applications with 'Approved' status in the system." 
+                    ? "Currently, there are no applications that have reached the approval or procurement phase." 
                     : "No records match your selected search criteria or division filter."}
                 </p>
               </div>
