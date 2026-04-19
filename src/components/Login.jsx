@@ -43,22 +43,22 @@ function Login() {
           textAlign: 'left'
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div style={{
-            width: '64px',
-            height: '64px',
+            width: '56px',
+            height: '56px',
             background: 'rgba(31, 78, 121, 0.2)',
             color: '#2e75b6',
-            borderRadius: '16px',
+            borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 1rem'
           }}>
-            <LogIn size={32} />
+            <LogIn size={28} />
           </div>
-          <h2 style={{ fontSize: '1.8rem', margin: '0 0 0.5rem' }}>Officer Login</h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Enter your credentials to access the SME Grant portal</p>
+          <h2 style={{ fontSize: 'clamp(1.4rem, 5vw, 1.8rem)', margin: '0 0 0.5rem' }}>Officer Login</h2>
+          <p style={{ color: '#94a3b8', fontSize: 'clamp(0.8rem, 3.5vw, 0.9rem)', lineHeight: '1.4' }}>Enter your credentials to access the SME Grant portal</p>
         </div>
 
         {error && (
