@@ -13,7 +13,8 @@ import {
   HelpCircle,
   LogOut,
   X,
-  Briefcase
+  Briefcase,
+  Shield
 } from 'lucide-react';
 
 function Sidebar({ activeTab, setActiveTab, onLogout, isOpen, onClose, userRole }) {
@@ -50,8 +51,11 @@ function Sidebar({ activeTab, setActiveTab, onLogout, isOpen, onClose, userRole 
   ] : normalizedRole === 'admin' ? [
     { id: 'overview', title: 'System Console', icon: <Home size={20} /> },
     { id: 'admin-tools', title: 'Administration', icon: <Settings size={20} />, subItems: [
-      { id: 'user-mgmt', title: 'User Management', icon: <PlusCircle size={16} /> },
-      { id: 'sectors', title: 'Sector Management', icon: <List size={16} /> }
+      { id: 'users', title: 'Staff Directory', icon: <PlusCircle size={16} /> },
+      { id: 'records', title: 'Master Records', icon: <FileText size={16} /> },
+      { id: 'sectors', title: 'Divisional Sectors', icon: <List size={16} /> },
+      { id: 'policy', title: 'Grant Policy', icon: <Shield size={16} /> },
+      { id: 'scoring', title: 'Scoring Engine', icon: <Settings size={16} /> }
     ]},
     { id: 'settings', title: 'Settings', icon: <Settings size={20} /> }
   ] : [

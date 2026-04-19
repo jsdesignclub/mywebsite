@@ -1,18 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../firebase';
 import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { FileText, CheckCircle, Package, Eye, Search, Clock, DollarSign, Download, Truck, Printer } from 'lucide-react';
+import { FileText, CheckCircle, Package, Eye, Search, Clock, DollarSign, Download, Truck, Printer, Filter, ArrowUpDown, X, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function AccountantModule({ statusFilter = 'approved' }) {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Advanced Filters for Accountant
+  const [divisionFilter, setDivisionFilter] = useState('all');
+  const [itemNameFilter, setItemNameFilter] = useState('all');
+  const [modelFilter, setModelFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
+  const [scoreSort, setScoreSort] = useState('desc');
+  const [divisions, setDivisions] = useState([]);
 
   useEffect(() => {
     fetchApplications();
+    fetchDivisions();
   }, [statusFilter]);
+
+  const fetchDivisions = async () => {
+     try {
+       const snap = await getDocs(collection(db, 'settings_divisions'));
+       if (!snap.empty) {
+         setDivisions(snap.docs.map(d => d.data().name));
+       }
+     } catch (err) { console.error(err); }
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -56,135 +76,225 @@ function AccountantModule({ statusFilter = 'approved' }) {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const getFilteredRecords = () => {
+    let filtered = applications.filter(app => {
+      const search = searchTerm.toLowerCase();
+      const matchesMainSearch = 
+        (app.personal?.fullName || "").toLowerCase().includes(search) ||
+        (app.business?.businessName || "").toLowerCase().includes(search) ||
+        (app.id || "").toLowerCase().includes(search);
+      
+      const matchesDivision = divisionFilter === 'all' || app.division === divisionFilter;
+      
+      // Accountant Specific Filters - Check all items
+      const items = app.equipment?.items || [];
+      const matchesItem = itemNameFilter === 'all' || items.some(item => item.name === itemNameFilter);
+      const matchesModel = modelFilter === 'all' || items.some(item => item.model === modelFilter);
+      const matchesBrand = brandFilter === 'all' || items.some(item => item.brand === brandFilter);
+
+      return matchesMainSearch && matchesDivision && matchesItem && matchesModel && matchesBrand;
+    });
+
+    if (scoreSort === 'asc') {
+      filtered.sort((a, b) => (a.score || 0) - (b.score || 0));
+    } else if (scoreSort === 'desc') {
+      filtered.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
+
+    return filtered;
+  };
+
+  // Dynamically extract unique values for filters
+  const uniqueDivisions = [...new Set(applications.map(app => app.division).filter(Boolean))].sort();
+  const uniqueItems = [...new Set(applications.flatMap(app => (app.equipment?.items || []).map(i => i.name)).filter(Boolean))].sort();
+  const uniqueBrands = [...new Set(applications.flatMap(app => (app.equipment?.items || []).map(i => i.brand)).filter(Boolean))].sort();
+  const uniqueModels = [...new Set(applications.flatMap(app => (app.equipment?.items || []).map(i => i.model)).filter(Boolean))].sort();
+
+  const exportCSV = () => {
+    const filtered = getFilteredRecords();
+    if (filtered.length === 0) return alert("No records to export");
+
+    const headers = [
+      "No", "ID", "Name", "Business", "Phone", "Division", "DO", "Item", "Model", "Brand", "Cost", "Grant"
+    ];
+    
+    const csvData = filtered.map((app, i) => {
+      const equip = app.equipment?.items?.[0] || {};
+      return [
+        i + 1,
+        `"${app.id.substring(0,8)}"`,
+        `"${app.personal?.fullName || ''}"`,
+        `"${app.business?.businessName || ''}"`,
+        `"${app.personal?.phone || ''}"`,
+        `"${app.division || ''}"`,
+        `"${app.officer?.email || ''}"`,
+        `"${equip.name || ''}"`,
+        `"${equip.model || ''}"`,
+        `"${equip.brand || ''}"`,
+        app.equipment?.totalGrant * 2 || 0,
+        app.equipment?.totalGrant || 0
+      ];
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + csvData.map(e => e.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `accountant_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPDF = () => {
+    const filtered = getFilteredRecords();
+    if (filtered.length === 0) return alert("No records to export");
+
+    const doc = new jsPDF('l', 'mm', 'a3');
+    doc.setFontSize(22);
+    doc.setTextColor(31, 78, 121);
+    doc.text("Procurement & Payment Authorization Registry", 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Report Type: ${statusFilter.toUpperCase()}`, 14, 30);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 35);
+
+    const tableData = filtered.map((app, i) => {
+      const equip = app.equipment?.items?.[0] || {};
+      return [
+        (i + 1).toString(),
+        app.id.substring(0,8),
+        app.personal?.fullName || "N/A",
+        app.business?.businessName || "N/A",
+        app.division || "-",
+        equip.name || "-",
+        equip.model || "-",
+        equip.brand || "-",
+        (app.score || 0).toString(),
+        `LKR ${(app.equipment?.totalGrant * 2 || 0).toLocaleString()}`,
+        `LKR ${(app.equipment?.totalGrant || 0).toLocaleString()}`
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 45,
+      head: [["#", "ID", "Applicant", "Business", "Division", "Item", "Model", "Brand", "Score", "Total Cost", "Grant Amount"]],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [31, 78, 121], textColor: [255, 255, 255], fontSize: 8 },
+      styles: { fontSize: 7 }
+    });
+
+    doc.save(`accountant_procurement_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}><p>Loading procurement registry...</p></div>;
 
-  const filteredApps = applications.filter(app => 
-    app.personal?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.personal?.nic?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Flatten items for the table view
-  const tableRows = filteredApps.flatMap(app => 
-    (app.equipment?.items || []).map(item => ({
-      appId: app.id,
-      applicantName: app.personal?.fullName,
-      officerEmail: app.officer?.email?.split('@')[0],
-      itemName: item.name,
-      brand: item.brand,
-      qty: item.qty,
-      unitPrice: item.unitPrice,
-      total: item.qty * item.unitPrice,
-      quotationData: item.quotationData,
-      status: app.status,
-      originalApp: app
-    }))
-  );
-
   return (
     <div className="animate-fade-in procurement-module">
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          .procurement-module, .procurement-module * { visibility: visible; }
-          .procurement-module { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-          .glass { background: white !important; color: black !important; border: 1px solid #ccc !important; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #000; padding: 8px; text-align: left; color: #000 !important; }
-          h2, p { color: #000 !important; }
-        }
-      `}</style>
-
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }} className="no-print">
+      <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '2.5rem', margin: 0, color: '#fff' }}>Procurement Master List</h2>
-          <p style={{ color: '#94a3b8' }}>Authorized equipment registry for disbursement and ordering.</p>
+          <h2 style={{ fontSize: '2.2rem', margin: 0 }}>Procurement Console</h2>
+          <p style={{ color: '#94a3b8', margin: '0.4rem 0 0' }}>Manage authorization and equipment distribution for {statusFilter} applications.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-            <input 
-              type="text" 
-              placeholder="Search registry..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={searchStyle}
-            />
-          </div>
-          <button onClick={handlePrint} style={printBtnStyle}>
-            <Printer size={18} /> Quick Print List
-          </button>
+        <div style={{ display: 'flex', gap: '0.8rem' }}>
+          <button onClick={exportCSV} style={secondaryBtnStyle}><Download size={16} /> CSV</button>
+          <button onClick={exportPDF} style={mainBtnStyle}><Printer size={16} /> Export PDF</button>
         </div>
       </div>
 
-      <div className="glass" style={{ overflowX: 'auto', padding: '1rem' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+      {/* Filter Toolbar */}
+      <div className="glass" style={{ padding: '1.5rem', borderRadius: '15px', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#444' }} />
+          <input 
+            type="text" 
+            placeholder="Search Applicant or Business..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <select value={divisionFilter} onChange={e => setDivisionFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Divisions</option>
+            {uniqueDivisions.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+
+          <select value={itemNameFilter} onChange={e => setItemNameFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Items</option>
+            {uniqueItems.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+
+          <select value={modelFilter} onChange={e => setModelFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Models</option>
+            {uniqueModels.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+
+          <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Brands</option>
+            {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+
+          <select value={scoreSort} onChange={e => setScoreSort(e.target.value)} style={selectStyle}>
+            <option value="desc">Score: High to Low</option>
+            <option value="asc">Score: Low to High</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="glass" style={{ padding: '1rem', borderRadius: '15px', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1600px' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-              <th style={thStyle}>Applicant</th>
-              <th style={thStyle}>DO</th>
-              <th style={thStyle}>Item Name</th>
-              <th style={thStyle}>Brand/Spec</th>
-              <th style={thStyle}>Qty</th>
-              <th style={thStyle} className="no-print">Quotation</th>
-              <th style={thStyle}>Amount (LKR)</th>
-              <th style={thStyle} className="no-print">Action</th>
+            <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+              <th style={thStyle}>No</th>
+              <th style={thStyle}>ID</th>
+              <th style={thStyle}>Full Name</th>
+              <th style={thStyle}>Business</th>
+              <th style={thStyle}>Division</th>
+              <th style={thStyle}>Equipment</th>
+              <th style={thStyle}>Model</th>
+              <th style={thStyle}>Brand</th>
+              <th style={thStyle}>Total Cost</th>
+              <th style={thStyle}>Grant</th>
+              <th style={thStyle}>Quotation</th>
+              <th style={thStyle} className="no-print">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {tableRows.map((row, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }} className="table-row">
-                <td style={tdStyle}><strong>{row.applicantName}</strong></td>
-                <td style={tdStyle}><span style={{ opacity: 0.6 }}>{row.officerEmail}</span></td>
-                <td style={tdStyle}>{row.itemName}</td>
-                <td style={tdStyle}>{row.brand}</td>
-                <td style={tdStyle}>{row.qty}</td>
-                <td style={tdStyle} className="no-print">
-                  {row.quotationData ? (
-                    <button 
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = row.quotationData;
-                        link.download = `quotation_${row.itemName}.png`;
-                        link.click();
-                      }}
-                      style={iconBtnStyle}
-                    >
-                      <Download size={14} />
+            {getFilteredRecords().map((app, idx) => {
+              const item = app.equipment?.items?.[0] || {};
+              return (
+                <tr key={app.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }} className="row-hover">
+                  <td style={tdStyle}>{idx + 1}</td>
+                  <td style={tdStyle}><code style={{ fontSize: '0.7rem', color: '#3b82f6' }}>{app.id.substring(0,8)}</code></td>
+                  <td style={tdStyle}><div style={{ fontWeight: 600 }}>{app.personal?.fullName}</div></td>
+                  <td style={tdStyle}>{app.business?.businessName}</td>
+                  <td style={tdStyle}>{app.division}</td>
+                  <td style={tdStyle}>{item.name || 'N/A'}</td>
+                  <td style={tdStyle}>{item.model || '-'}</td>
+                  <td style={tdStyle}>{item.brand || '-'}</td>
+                  <td style={tdStyle}>LKR {(app.equipment?.totalGrant * 2 || 0).toLocaleString()}</td>
+                  <td style={tdStyle}><div style={{ color: '#10b981', fontWeight: 700 }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</div></td>
+                  <td style={tdStyle}>
+                    {app.equipment?.quotationUrl ? (
+                      <a href={app.equipment.quotationUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
+                        <FileText size={14} /> PDF
+                      </a>
+                    ) : '-'}
+                  </td>
+                  <td style={tdStyle} className="no-print">
+                    <button onClick={() => setSelectedApp(app)} style={viewBtnStyle}>
+                      <Eye size={16} /> Manage
                     </button>
-                  ) : '-'}
-                </td>
-                <td style={tdStyle}><strong>{row.total.toLocaleString()}</strong></td>
-                <td style={tdStyle} className="no-print">
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                      onClick={() => setSelectedApp(row.originalApp)}
-                      style={{ ...actionBtnStyle, background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}
-                    >
-                      <Eye size={14} />
-                    </button>
-                    {statusFilter === 'approved' && (
-                       <button 
-                         onClick={() => handleUpdateStatus(row.appId, 'ordered')}
-                         style={{ ...actionBtnStyle, background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}
-                         title="Order Now"
-                       >
-                         <Package size={14} />
-                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
-        {tableRows.length === 0 && (
+        {getFilteredRecords().length === 0 && (
           <div style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
             <Clock size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
             <p>No procurement records found for this phase.</p>
@@ -192,89 +302,60 @@ function AccountantModule({ statusFilter = 'approved' }) {
         )}
       </div>
 
-      {/* Detail Modal */}
       <AnimatePresence>
         {selectedApp && (
-          <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)} className="no-print">
-            <motion.div 
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.95 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 0.95 }}
                className="glass" 
-               style={modalContentStyle} 
-               onClick={e => e.stopPropagation()}
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: 20 }}
-            >
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ margin: 0 }}>Full Application Details</h2>
-                  <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>CLOSE</button>
-               </div>
-
-               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
-                  <div>
-                    <h4 style={sectionTitle}>Beneficiary Identity</h4>
-                    <p><strong>Name:</strong> {selectedApp.personal?.fullName}</p>
-                    <p><strong>NIC:</strong> {selectedApp.personal?.nic}</p>
-                    <p><strong>District/Division:</strong> {selectedApp.officer?.email?.split('@')[0]}</p>
+               style={{ width: '100%', maxWidth: '700px', padding: '2.5rem', borderRadius: '24px', position: 'relative' }}
+             >
+                <button onClick={() => setSelectedApp(null)} style={{ position: 'absolute', right: '1.5rem', top: '1.5rem', background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X /></button>
+                
+                <h3 style={{ margin: '0 0 1.5rem' }}>Procurement Authorization</h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '15px' }}>
+                    <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', opacity: 0.6 }}>BENEFICIARY</p>
+                    <p style={{ margin: 0, fontWeight: 700 }}>{selectedApp.personal?.fullName}</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}>{selectedApp.business?.businessName}</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.8 }}>Division: {selectedApp.division}</p>
                   </div>
-                  <div>
-                    <h4 style={sectionTitle}>Financial Breakdown</h4>
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', opacity: 0.7, fontSize: '0.9rem' }}>
-                          <span>Total Equipment Request:</span>
-                          <span>LKR {((selectedApp.equipment?.items || []).reduce((sum, i) => sum + (Number(i.qty) * Number(i.unitPrice)), 0)).toLocaleString()}</span>
-                       </div>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', opacity: 0.7, fontSize: '0.9rem' }}>
-                          <span>Govt Grant (50% / Max 100k):</span>
-                          <span style={{ color: '#10b981', fontWeight: 700 }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</span>
-                       </div>
-                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '0.8rem', paddingTop: '0.8rem', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                          <span>Applicant Contribution:</span>
-                          <span style={{ color: '#3b82f6' }}>LKR {(((selectedApp.equipment?.items || []).reduce((sum, i) => sum + (Number(i.qty) * Number(i.unitPrice)), 0)) - (selectedApp.equipment?.totalGrant || 0)).toLocaleString()}</span>
-                       </div>
-                    </div>
-                    <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>* Policy: 50% matching grant provided, capped at a maximum of LKR 100,000.00</p>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1.5rem', borderRadius: '15px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                    <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#10b981' }}>AUTHORIZED GRANT</p>
+                    <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#10b981' }}>LKR {selectedApp.equipment?.totalGrant?.toLocaleString()}</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>Covering 50% of asset cost</p>
                   </div>
-               </div>
+                </div>
 
-               <div style={{ marginTop: '3rem' }}>
-                  <h4 style={sectionTitle}>Equipment Specification List</h4>
-                  <table style={{ width: '100%', color: '#fff' }}>
-                     <thead>
-                        <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                           <th style={{ padding: '1rem' }}>Model/Name</th>
-                           <th style={{ padding: '1rem' }}>Brand</th>
-                           <th style={{ padding: '1rem' }}>Unit Price (LKR)</th>
-                        </tr>
-                     </thead>
-                     <tbody>
-                        {(selectedApp.equipment?.items || []).map((item, i) => (
-                           <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                              <td style={{ padding: '0.8rem' }}>{item.name}</td>
-                              <td style={{ padding: '0.8rem' }}>{item.brand}</td>
-                              <td style={{ padding: '0.8rem' }}>{(item.unitPrice).toLocaleString()}</td>
-                           </tr>
-                        ))}
-                     </tbody>
-                  </table>
-               </div>
-
-               {statusFilter === 'approved' && (
-                  <div style={{ marginTop: '4rem', display: 'flex', gap: '1rem' }}>
+                <div style={{ marginBottom: '2.5rem' }}>
+                   <p style={{ fontSize: '0.85rem', marginBottom: '1rem', fontWeight: 600 }}>Update Status:</p>
+                   <div style={{ display: 'flex', gap: '1rem' }}>
                      <button 
-                       onClick={() => handleUpdateStatus(selectedApp.id, 'ordered')}
-                       style={{ flexGrow: 1, padding: '1rem', background: '#a855f7', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                       onClick={() => handleUpdateStatus(selectedApp.id, 'ordered')} 
+                       style={{ flex: 1, padding: '1rem', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontWeight: 700 }}
                      >
-                       APPROVE & PLACE ORDER
+                       <Truck size={20} /> Equipment Ordered
                      </button>
                      <button 
-                       onClick={() => handlePrint()}
-                       style={{ padding: '1rem 2rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                       onClick={() => handleUpdateStatus(selectedApp.id, 'completed')} 
+                       style={{ flex: 1, padding: '1rem', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontWeight: 700 }}
                      >
-                       <Printer size={18} /> PRINT RECORD
+                       <DollarSign size={20} /> Payment Released
                      </button>
+                   </div>
+                </div>
+
+                {selectedApp.equipment?.quotationUrl && (
+                  <div style={{ marginBottom: '2rem' }}>
+                    <a href={selectedApp.equipment.quotationUrl} target="_blank" rel="noopener noreferrer" style={{ width: '100%', padding: '1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontSize: '0.9rem' }}>
+                      <ExternalLink size={18} /> Review Original Quotation
+                    </a>
                   </div>
-               )}
-            </motion.div>
+                )}
+             </motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -282,74 +363,12 @@ function AccountantModule({ statusFilter = 'approved' }) {
   );
 }
 
-// Internal Styles
-const thStyle = { padding: '1.2rem 1rem', textAlign: 'left', fontWeight: 600 };
-const tdStyle = { padding: '1.2rem 1rem' };
-const sectionTitle = { fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', marginBottom: '1rem', letterSpacing: '0.1em' };
-
-const searchStyle = {
-  padding: '0.8rem 1.2rem 0.8rem 3rem',
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '10px',
-  color: '#fff',
-  width: '300px',
-  outline: 'none',
-  fontSize: '0.9rem'
-};
-
-const printBtnStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.8rem 1.5rem',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '10px',
-  color: '#fff',
-  cursor: 'pointer',
-  fontWeight: 600
-};
-
-const iconBtnStyle = {
-  background: 'rgba(168, 85, 247, 0.1)',
-  border: 'none',
-  borderRadius: '6px',
-  color: '#a855f7',
-  padding: '0.4rem',
-  cursor: 'pointer',
-  display: 'flex'
-};
-
-const actionBtnStyle = {
-  padding: '0.5rem',
-  borderRadius: '6px',
-  border: 'none',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-};
-
-const modalOverlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(0,0,0,0.85)',
-  backdropFilter: 'blur(12px)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-  padding: '2rem'
-};
-
-const modalContentStyle = {
-  width: '100%',
-  maxWidth: '1000px',
-  padding: '3rem',
-  background: '#0c111d',
-  borderRadius: '20px',
-  border: '1px solid rgba(255,255,255,0.1)'
-};
+const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' };
+const tdStyle = { padding: '1.2rem 1.5rem', fontSize: '0.9rem' };
+const inputStyle = { width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none' };
+const selectStyle = { padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', outline: 'none', cursor: 'pointer' };
+const viewBtnStyle = { background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 };
+const mainBtnStyle = { background: '#3b82f6', color: '#fff', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
+const secondaryBtnStyle = { background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '0.7rem 1.5rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 };
 
 export default AccountantModule;

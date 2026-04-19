@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../firebase';
-import { collection, getDocs, getDoc, doc, updateDoc, setDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, updateDoc, setDoc, addDoc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { UserPlus, Shield, MapPin, Search, Trash2, Mail, X, CheckCircle, Settings } from 'lucide-react';
+import { UserPlus, Shield, MapPin, Search, Trash2, Mail, X, CheckCircle, Settings, Eye, FileText, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Download, Filter } from 'lucide-react';
 
-function AdminModule() {
+function AdminModule({ activeTab: externalTab }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,12 +37,168 @@ function AdminModule() {
     { id: 'admin', label: 'System Admin' }
   ];
 
+  const [approvedApps, setApprovedApps] = useState([]);
+  const [appsLoading, setAppsLoading] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
+  
+  // Filters
+  const [recordSearch, setRecordSearch] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState('all');
+  const [scoreSort, setScoreSort] = useState('desc'); 
+
   useEffect(() => {
     fetchUsers();
     fetchGrantPolicy();
     fetchDivisions();
     fetchScoringPolicy();
+    fetchApprovedApps();
   }, []);
+
+  const exportCSV = () => {
+    const filtered = getFilteredRecords();
+    if (filtered.length === 0) return alert("No records to export");
+
+    const headers = [
+      "No", "Application ID", "Applicant Name", "Business Name", "Phone", 
+      "Address", "Divisional Secretariat", "GS Division", "Development Officer", 
+      "Equipment Requested", "Model No", "Brand", "Viability Score", "Total Asset Cost", "Approved Grant Amount"
+    ];
+    
+    const csvData = filtered.map((app, i) => {
+      const equip = app.equipment?.items?.[0] || {};
+      return [
+        i + 1,
+        `"${app.id}"`,
+        `"${app.personal?.fullName || ''}"`,
+        `"${app.business?.businessName || ''}"`,
+        `"${app.personal?.phone || ''}"`,
+        `"${app.personal?.address || ''}"`,
+        `"${app.division || ''}"`,
+        `"${app.personal?.gsDivision || ''}"`,
+        `"${app.officer?.email || ''}"`,
+        `"${equip.name || ''}"`,
+        `"${equip.model || ''}"`,
+        `"${equip.brand || ''}"`,
+        app.score || 0,
+        app.equipment?.totalGrant * 2 || 0,
+        app.equipment?.totalGrant || 0
+      ];
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n"
+      + csvData.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `full_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPDF = () => {
+    const filtered = getFilteredRecords();
+    if (filtered.length === 0) return alert("No records to export");
+
+    try {
+      const doc = new jsPDF('l', 'mm', 'a3'); // Use A3 for extra width since many columns
+      
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(31, 78, 121);
+      doc.text("SME Grant Management System - Comprehensive Master Records", 14, 22);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`District/Province: Uva Provincial Government`, 14, 28);
+      doc.text(`Report Date: ${new Date().toLocaleString()}`, 14, 33);
+      doc.text(`Record Count: ${filtered.length} Applications`, 14, 38);
+
+      const tableData = filtered.map((app, i) => {
+        const equip = app.equipment?.items?.[0] || {};
+        return [
+          (i + 1).toString(),
+          app.id.substring(0,6),
+          app.personal?.fullName || "N/A",
+          app.business?.businessName || "N/A",
+          app.personal?.phone || "-",
+          app.division || "-",
+          app.personal?.gsDivision || "-",
+          app.officer?.email?.split('@')[0] || "-",
+          equip.name || "-",
+          equip.model || "-",
+          (app.score || 0).toString(),
+          (app.equipment?.totalGrant * 2 || 0).toLocaleString(),
+          (app.equipment?.totalGrant || 0).toLocaleString()
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 45,
+        head: [["#", "ID", "Name", "Business", "Phone", "Division", "GS Div", "DO", "Equipment", "Model", "Score", "Total Cost", "Grant"]],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [31, 78, 121], textColor: [255, 255, 255], fontSize: 8 },
+        styles: { fontSize: 7, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 15 },
+          10: { fontStyle: 'bold' },
+          12: { fontStyle: 'bold', textColor: [16, 185, 129] }
+        }
+      });
+
+      doc.save(`master_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error("PDF Export Error:", err);
+      alert("Error generating comprehensive PDF.");
+    }
+  };
+
+
+  const getFilteredRecords = () => {
+    let filtered = approvedApps.filter(app => {
+      const search = recordSearch.toLowerCase();
+      const matchesSearch = 
+        (app.personal?.fullName || "").toLowerCase().includes(search) ||
+        (app.business?.businessName || "").toLowerCase().includes(search) ||
+        (app.id || "").toLowerCase().includes(search);
+      
+      const matchesDivision = divisionFilter === 'all' || app.division === divisionFilter;
+      
+      return matchesSearch && matchesDivision;
+    });
+
+    // Apply Sorting
+    if (scoreSort === 'asc') {
+      filtered.sort((a, b) => (a.score || 0) - (b.score || 0));
+    } else if (scoreSort === 'desc') {
+      filtered.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
+
+    return filtered;
+  };
+
+  // Sync with external sidebar tab
+  useEffect(() => {
+    if (externalTab && externalTab !== 'overview' && externalTab !== 'admin-tools') {
+      setActiveSubTab(externalTab);
+    } else if (externalTab === 'overview') {
+      setActiveSubTab('users');
+    }
+  }, [externalTab]);
+
+  const fetchApprovedApps = async () => {
+    setAppsLoading(true);
+    try {
+      const q = query(collection(db, 'applications'), where('status', '==', 'approved'));
+      const snap = await getDocs(q);
+      setApprovedApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) { console.error(err); }
+    finally { setAppsLoading(false); }
+  };
 
   const fetchScoringPolicy = async () => {
     try {
@@ -200,32 +359,175 @@ function AdminModule() {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h2 style={{ fontSize: '2.5rem', margin: 0 }}>System Governance</h2>
-          <p style={{ color: '#94a3b8' }}>Manage identities, sectors, and financial policies.</p>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.5rem)', margin: 0 }}>System Governance</h2>
+          <p style={{ color: '#94a3b8', fontSize: '1rem', marginTop: '0.4rem' }}>
+            {activeSubTab === 'users' ? 'Staff Directory & Access Control' : 
+             activeSubTab === 'records' ? 'Approved Grant Master Records' :
+             activeSubTab === 'sectors' ? 'Regional Sector & Division Management' :
+             activeSubTab === 'policy' ? 'Financial Granting Policies' : 'Scoring Rubric Configuration'}
+          </p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} style={addBtnStyle}>
-          <UserPlus size={20} /> Add Staff Member
-        </button>
+        {activeSubTab === 'users' && (
+          <button onClick={() => setIsModalOpen(true)} style={addBtnStyle}>
+            <UserPlus size={20} /> Add Staff Member
+          </button>
+        )}
       </div>
 
-      <div style={{ display: 'flex', gap: '2rem', marginBottom: '3rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        {['users', 'sectors', 'policy', 'scoring'].map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveSubTab(tab)} 
-            style={{ 
-              background: 'transparent', border: 'none', padding: '1rem 0', fontWeight: 600, cursor: 'pointer',
-              borderBottom: activeSubTab === tab ? '2px solid #3b82f6' : '2px solid transparent',
-              color: activeSubTab === tab ? '#3b82f6' : '#94a3b8',
-              textTransform: 'capitalize'
-            }}
-          >
-            {tab === 'users' ? 'Staff Directory' : tab === 'sectors' ? 'Divisional Sectors' : tab === 'policy' ? 'Grant Policy' : 'Scoring Engine'}
-          </button>
-        ))}
-      </div>
+      {activeSubTab === 'records' && (
+        <div className="animate-fade-in">
+          <div className="glass" style={{ padding: '2rem', borderRadius: '20px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '2rem', flexWrap: 'wrap' }}>
+               <h3 style={{ margin: 0 }}>Approved Grant Applications</h3>
+               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                 <button onClick={exportCSV} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '0.6rem 1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>
+                   <Download size={18} /> Export CSV
+                 </button>
+                 <button onClick={exportPDF} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', border: '1px solid rgba(168, 85, 247, 0.2)', padding: '0.6rem 1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: 600 }}>
+                   <FileText size={18} /> Export PDF
+                 </button>
+               </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap', background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <div style={{ position: 'relative', flexGrow: 1, minWidth: '250px' }}>
+                 <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                 <input 
+                   type="text" 
+                   placeholder="Search name, business or ID..." 
+                   value={recordSearch} 
+                   onChange={e => setRecordSearch(e.target.value)} 
+                   style={{ ...searchStyle, background: 'rgba(0,0,0,0.2)' }} 
+                 />
+               </div>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '200px' }}>
+                 <Filter size={18} color="#94a3b8" />
+                 <select 
+                   value={divisionFilter} 
+                   onChange={e => setDivisionFilter(e.target.value)}
+                   style={{ ...selectStyle, width: '100%', height: '45px' }}
+                 >
+                   <option value="all">All Divisions</option>
+                   {divisions.map(d => <option key={d} value={d}>{d}</option>)}
+                 </select>
+               </div>
+               
+               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '180px' }}>
+                 <ArrowUpDown size={18} color="#94a3b8" />
+                 <select 
+                   value={scoreSort} 
+                   onChange={e => setScoreSort(e.target.value)}
+                   style={{ ...selectStyle, width: '100%', height: '45px' }}
+                 >
+                   <option value="desc">Score: High to Low</option>
+                   <option value="asc">Score: Low to High</option>
+                   <option value="none">Default (Latest)</option>
+                 </select>
+               </div>
+
+               <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '0.4rem 1.5rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                 {getFilteredRecords().length} MATCHES
+               </div>
+            </div>
+            
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1800px' }}>
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <th style={thStyle}>No</th>
+                  <th style={thStyle}>ID No</th>
+                  <th style={thStyle}>Full Name</th>
+                  <th style={thStyle}>Business Name</th>
+                  <th style={thStyle}>Phone</th>
+                  <th style={thStyle}>Address</th>
+                  <th style={thStyle}>Divisional</th>
+                  <th style={thStyle}>GS Division</th>
+                  <th style={thStyle}>DO Name</th>
+                  <th style={thStyle}>Equipment</th>
+                  <th style={thStyle}>Model</th>
+                  <th style={thStyle}>Brand</th>
+                  <th style={thStyle}>Score</th>
+                  <th style={thStyle}>Total Cost</th>
+                  <th style={thStyle}>Grant</th>
+                  <th style={thStyle}>Quotation</th>
+                  <th style={thStyle}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredRecords().map((app, idx) => {
+                  const firstItem = app.equipment?.items?.[0] || {};
+                  return (
+                    <tr key={app.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="row-hover">
+                      <td style={tdStyle}>{idx + 1}</td>
+                      <td style={tdStyle}><code style={{ fontSize: '0.75rem', color: '#3b82f6' }}>{app.id.substring(0, 8)}</code></td>
+                      <td style={tdStyle}><div style={{ fontWeight: 600 }}>{app.personal?.fullName}</div></td>
+                      <td style={tdStyle}>{app.business?.businessName}</td>
+                      <td style={tdStyle}>{app.personal?.phone}</td>
+                      <td style={tdStyle} title={app.personal?.address}>
+                        <div style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {app.personal?.address}
+                        </div>
+                      </td>
+                      <td style={tdStyle}>{app.division}</td>
+                      <td style={tdStyle}>{app.personal?.gsDivision}</td>
+                      <td style={tdStyle}><div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{app.officer?.email?.split('@')[0] || 'System'}</div></td>
+                      <td style={tdStyle}>{firstItem.name || 'N/A'}</td>
+                      <td style={tdStyle}>{firstItem.model || '-'}</td>
+                      <td style={tdStyle}>{firstItem.brand || '-'}</td>
+                      <td style={tdStyle}>
+                        <span style={{ fontWeight: 800, color: '#10b981' }}>{app.score}</span>
+                      </td>
+                      <td style={tdStyle}>LKR {(app.equipment?.totalGrant * 2 || 0).toLocaleString()}</td>
+                      <td style={tdStyle}><div style={{ fontWeight: 800, color: '#10b981' }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</div></td>
+                      <td style={tdStyle}>
+                        {app.equipment?.quotationUrl ? (
+                          <a 
+                            href={app.equipment.quotationUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                          >
+                            <FileText size={14} /> View PDF
+                          </a>
+                        ) : <span style={{ opacity: 0.3 }}>-</span>}
+                      </td>
+                      <td style={tdStyle}>
+                        <button 
+                          onClick={() => setSelectedApp(app)}
+                          style={{ background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                          <Eye size={16} /> View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {getFilteredRecords().length === 0 && !appsLoading && (
+              <div style={{ padding: '6rem 2rem', textAlign: 'center', color: '#64748b', background: 'rgba(255,255,255,0.01)', borderRadius: '15px' }}>
+                <Search size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                <h3 style={{ margin: '0 0 0.5rem', color: '#94a3b8' }}>No Records Found</h3>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                  {approvedApps.length === 0 
+                    ? "Currently, there are no applications with 'Approved' status in the system." 
+                    : "No records match your selected search criteria or division filter."}
+                </p>
+              </div>
+            )}
+
+            {appsLoading && (
+              <div style={{ padding: '4rem', textAlign: 'center', color: '#3b82f6' }}>
+                <div className="spinning" style={{ marginBottom: '1rem' }}>⌛</div>
+                Fetching master grant records...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeSubTab === 'users' && (
         <div className="animate-fade-in">
@@ -486,6 +788,83 @@ function AdminModule() {
                   </div>
                   <button type="submit" disabled={isSubmitting} style={{ width: '100%', padding: '1rem', background: '#3b82f6', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{isSubmitting ? 'Processing...' : 'Create Account'}</button>
                </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin App Preview Modal */}
+      <AnimatePresence>
+        {selectedApp && (
+          <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
+            <motion.div 
+               className="glass" 
+               style={{ ...modalContentStyle, maxWidth: '800px', padding: '2.5rem' }} 
+               onClick={e => e.stopPropagation()} 
+               initial={{ opacity: 0, y: 30 }} 
+               animate={{ opacity: 1, y: 0 }} 
+               exit={{ opacity: 0, y: 30 }}
+            >
+               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                  <div>
+                    <h3 style={{ margin: 0 }}>Application Dossier</h3>
+                    <p style={{ margin: '0.4rem 0 0', fontSize: '0.8rem', opacity: 0.6 }}>ID: {selectedApp.id}</p>
+                  </div>
+                  <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}><X /></button>
+               </div>
+
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                  <div>
+                    <h4 style={{ color: '#3b82f6', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Applicant Information</h4>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Name:</strong> {selectedApp.personal?.fullName}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>NIC:</strong> {selectedApp.personal?.nic}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Phone:</strong> {selectedApp.personal?.phone}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Address:</strong> {selectedApp.personal?.address}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>GS Division:</strong> {selectedApp.personal?.gsDivision}</p>
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#3b82f6', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Business & Scoring</h4>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Business:</strong> {selectedApp.business?.businessName}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Sector:</strong> {selectedApp.business?.sector}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Final Score:</strong> <span style={{ color: '#10b981', fontWeight: 800 }}>{selectedApp.score} Pts</span></p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Division:</strong> {selectedApp.division}</p>
+                  </div>
+               </div>
+
+                <div style={{ marginTop: '2rem' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                      <h4 style={{ color: '#3b82f6', margin: 0 }}>Equipment & Grant Details</h4>
+                      {selectedApp.equipment?.quotationUrl && (
+                        <a 
+                          href={selectedApp.equipment.quotationUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'rgba(16, 185, 129, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '6px' }}
+                        >
+                          <ExternalLink size={14} /> View Original Quotation
+                        </a>
+                      )}
+                   </div>
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px' }}>
+                    {(selectedApp.equipment?.items || []).map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                        <span>{item.name} ({item.brand} {item.model}) x {item.qty}</span>
+                        <span>LKR {(item.qty * item.unitPrice).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+                      <span>APPROVED GRANT AMOUNT:</span>
+                      <span style={{ color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+               </div>
+
+               <button 
+                  onClick={() => setSelectedApp(null)}
+                  style={{ width: '100%', marginTop: '2rem', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', cursor: 'pointer' }}
+               >
+                 Close Preview
+               </button>
             </motion.div>
           </div>
         )}

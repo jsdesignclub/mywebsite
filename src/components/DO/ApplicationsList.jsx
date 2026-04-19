@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { FileText, Clock, CheckCircle, AlertCircle, Eye, Search, Filter, Trash2, Edit3, X, Download, User as UserIcon, Briefcase, GraduationCap, Factory, PenTool, XCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Eye, Search, Filter, Trash2, Edit3, X, Download, User as UserIcon, Briefcase, GraduationCap, Factory, PenTool, XCircle, Loader2 } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 
-function ApplicationsList({ statusFilter = 'all', onEdit }) {
+function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
   const { userRole, userDivision } = useAuth();
   const normalizedRole = userRole?.toLowerCase();
   const [applications, setApplications] = useState([]);
@@ -130,21 +130,48 @@ function ApplicationsList({ statusFilter = 'all', onEdit }) {
     }
   };
 
-  const filteredApps = applications.filter(app => 
-    app.personal?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.personal?.nic?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredApps = applications.filter(app => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (app.personal?.fullName || "").toLowerCase().includes(search) ||
+      (app.personal?.nic || "").toLowerCase().includes(search) ||
+      (app.business?.businessName || "").toLowerCase().includes(search)
+    );
+  });
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-        <p style={{ color: '#64748b' }}>Loading applications...</p>
+      <div style={{ padding: isCompact ? '1rem' : '4rem', textAlign: 'center', color: '#64748b' }}>
+         <Loader2 className="animate-spin" size={isCompact ? 20 : 32} style={{ margin: '0 auto 1rem' }} />
+         <p>{isCompact ? '...' : 'Loading Applications...'}</p>
+      </div>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+        {applications.slice(0, 5).map(app => (
+          <div key={app.id} onClick={() => setSelectedApp(app)} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.2s' }} className="row-hover">
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ maxWidth: '70%', overflow: 'hidden' }}>
+                   <div style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{app.personal?.fullName}</div>
+                   <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{app.business?.businessName}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981' }}>{app.score}</div>
+                   <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Pts</div>
+                </div>
+             </div>
+          </div>
+        ))}
+        {applications.length === 0 && <p style={{ fontSize: '0.8rem', opacity: 0.5, textAlign: 'center', padding: '1rem' }}>No approved grants yet.</p>}
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in" style={{ textAlign: 'left', width: '100%' }}>
       <div style={{ 
         marginBottom: '2rem', 
         display: 'flex', 

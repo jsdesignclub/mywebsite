@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { User, LayoutDashboard, Bell, Search } from 'lucide-react';
+import { User, LayoutDashboard, Bell, Search, CheckCircle } from 'lucide-react';
 import { auth } from '../firebase';
 import DOModule from './DO/DOModule';
 import ApplicationsList from './DO/ApplicationsList';
@@ -34,8 +34,8 @@ function Dashboard() {
     if (normalizedRole === 'accountant' && (activeTab === 'overview' || activeTab === 'procurement')) {
       return <AccountantModule statusFilter="approved" />;
     }
-    if (normalizedRole === 'admin' && (activeTab === 'overview' || activeTab === 'user-mgmt')) {
-      return <AdminModule />;
+    if (normalizedRole === 'admin' && (['overview', 'users', 'records', 'sectors', 'policy', 'scoring'].includes(activeTab))) {
+      return <AdminModule activeTab={activeTab} />;
     }
 
     switch (activeTab) {
@@ -47,9 +47,12 @@ function Dashboard() {
         return <AccountantModule statusFilter="approved" />;
       case 'ordered-app':
         return <AccountantModule statusFilter="ordered" />;
-      case 'user-mgmt':
+      case 'users':
+      case 'records':
       case 'sectors':
-        return <AdminModule />;
+      case 'policy':
+      case 'scoring':
+        return <AdminModule activeTab={activeTab} />;
       case 'new-app':
         return <DOModule initialData={editingApp} onComplete={() => setEditingApp(null)} />;
       case 'pending-app':
@@ -78,27 +81,39 @@ function Dashboard() {
 
             <div className="grid-2">
               <div className="glass" style={{ padding: 'clamp(1rem, 4vw, 2rem)', textAlign: 'left' }}>
-                <h3 style={{ margin: '0 0 1rem', fontSize: '1.2rem' }}>Active Applications</h3>
-                <div style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(255,255,255,0.01)' }}>
-                  <LayoutDashboard size={32} style={{ marginBottom: '0.8rem', opacity: 0.3 }} />
-                  <p style={{ fontSize: '0.85rem' }}>No active applications found.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Approved Grants</h3>
+                  <button 
+                    onClick={() => setActiveTab('approved-app')}
+                    style={{ background: 'transparent', border: 'none', color: '#3b82f6', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    View All
+                  </button>
                 </div>
+                {normalizedRole === 'development_officer' ? (
+                  <div className="animate-fade-in">
+                    <ApplicationsList statusFilter="approved" isCompact={true} />
+                  </div>
+                ) : (
+                  <div style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(255,255,255,0.01)' }}>
+                    <LayoutDashboard size={32} style={{ marginBottom: '0.8rem', opacity: 0.3 }} />
+                    <p style={{ fontSize: '0.85rem' }}>No active data available.</p>
+                  </div>
+                )}
               </div>
 
               <div className="glass" style={{ padding: 'clamp(1rem, 4vw, 2rem)', textAlign: 'left' }}>
                 <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.2rem' }}>Recent Notifications</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                  {[1, 2].map(i => (
-                    <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.8rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                      <div style={{ padding: '0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px', height: 'fit-content' }}>
-                        <Bell size={18} color="#3b82f6" />
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '0.9rem', margin: 0, color: '#e2e8f0', fontWeight: 500 }}>System initialized for Province.</p>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Just now</span>
-                      </div>
+                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.8rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{ padding: '0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px' }}>
+                      <CheckCircle size={18} color="#3b82f6" />
                     </div>
-                  ))}
+                    <div>
+                      <p style={{ fontSize: '0.9rem', margin: 0, color: '#e2e8f0', fontWeight: 500 }}>Global Grant System Active.</p>
+                      <p style={{ fontSize: '0.75rem', margin: '0.2rem 0 0', color: '#64748b' }}>Province-wide scoring rubric is now live.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
