@@ -69,57 +69,65 @@ function DirectorModule() {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: '2.2rem', margin: 0, color: '#fff' }}>Final Approval Panel</h2>
-          <p style={{ color: '#94a3b8' }}>Reviewing applications recommended by Divisional Secretaries.</p>
+      <div style={{ 
+        marginBottom: '2rem', 
+        display: 'flex', 
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        gap: '1rem'
+      }}>
+        <div style={{ flex: '1', minWidth: '250px' }}>
+          <h2 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.2rem)', margin: 0, color: '#fff' }}>Final Approval Panel</h2>
+          <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.5rem' }}>Reviewing applications recommended by Divisional Secretaries.</p>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: window.innerWidth < 768 ? '100%' : '350px' }}>
           <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
           <input 
             type="text" 
             placeholder="Search applicants..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={searchStyle}
+            style={{ ...searchStyle, width: '100%' }}
           />
         </div>
       </div>
 
       <div className="grid-2">
         {filteredApps.map(app => (
-          <div key={app.id} className="glass card-hover" style={{ padding: '2rem', cursor: 'pointer', border: '1px solid rgba(16, 185, 129, 0.2)' }} onClick={() => setSelectedApp(app)}>
+          <div key={app.id} className="glass" style={{ padding: '1.5rem', cursor: 'pointer', border: '1px solid rgba(16, 185, 129, 0.1)' }} onClick={() => setSelectedApp(app)}>
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                 <div style={{ padding: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px' }}>
-                   <ShieldCheck color="#10b981" size={28} />
+                 <div style={{ padding: '0.6rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px' }}>
+                   <ShieldCheck color="#10b981" size={24} />
                  </div>
                  <div>
-                   <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{app.personal?.fullName}</h3>
-                   <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Recommended by DS</span>
+                   <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff' }}>{app.personal?.fullName}</h3>
+                   <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended by DS</span>
                  </div>
                </div>
                <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
-                 <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#10b981' }}>{app.score || 0}</div>
-                 <div style={{ fontSize: '0.6rem', color: '#64748b' }}>TOTAL SCORE</div>
+                 <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#10b981' }}>{app.score || 0}</div>
+                 <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 700 }}>TOTAL SCORE</div>
                </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.2rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}><strong>Business:</strong> {app.business?.businessName}</p>
-                <p style={{ margin: 0, fontSize: '0.9rem' }}><strong>Requested Grant:</strong> <span style={{ color: '#10b981', fontWeight: 700 }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</span></p>
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}><strong>Business:</strong> {app.business?.businessName}</p>
+                <p style={{ margin: 0, fontSize: '0.85rem' }}><strong>Grant:</strong> <span style={{ color: '#10b981', fontWeight: 700 }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</span></p>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'approved'); }}
-                style={{ flexGrow: 2, padding: '0.8rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '200px' }}
+                style={{ flexGrow: 2, padding: '0.8rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '180px', fontSize: '0.9rem' }}
               >
-                <CheckCircle size={20} /> FINAL APPROVAL
+                <CheckCircle size={18} /> APPROVE
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'rejected'); }}
-                style={{ flexGrow: 1, padding: '0.8rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '10px', color: '#f43f5e', fontWeight: 600, cursor: 'pointer', minWidth: '100px' }}
+                style={{ flexGrow: 1, padding: '0.8rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '8px', color: '#f43f5e', fontWeight: 600, cursor: 'pointer', minWidth: '80px', fontSize: '0.9rem' }}
               >
                 REJECT
               </button>
@@ -129,29 +137,52 @@ function DirectorModule() {
       </div>
 
       {filteredApps.length === 0 && (
-        <div className="glass" style={{ padding: '6rem', textAlign: 'center', color: '#64748b' }}>
-          <Clock size={64} style={{ marginBottom: '1.5rem', opacity: 0.1 }} />
-          <h3>No applications awaiting final approval</h3>
-          <p>Everything is up to date.</p>
+        <div className="glass" style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
+          <Clock size={48} style={{ marginBottom: '1rem', opacity: 0.1 }} />
+          <h3 style={{ fontSize: '1.2rem' }}>No applications awaiting final approval</h3>
+          <p style={{ fontSize: '0.9rem' }}>Everything is up to date.</p>
         </div>
       )}
 
       {/* Detail Modal */}
       <AnimatePresence>
         {selectedApp && (
-          <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
+          <div style={{
+            ...modalOverlayStyle,
+            padding: window.innerWidth < 768 ? '1rem' : '2rem'
+          }} onClick={() => setSelectedApp(null)}>
             <motion.div 
                className="glass-card" 
-               style={{ ...modalContentStyle, padding: 0 }} 
+               style={{ 
+                 ...modalContentStyle, 
+                 padding: 0,
+                 borderRadius: '20px',
+                 overflow: 'hidden'
+               }} 
                onClick={e => e.stopPropagation()}
-               initial={{ opacity: 0, y: 30 }}
+               initial={{ opacity: 0, y: 50 }}
                animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: 30 }}
+               exit={{ opacity: 0, y: 50 }}
             >
-               <div style={{ padding: '2rem' }}>
+               <div style={{ padding: window.innerWidth < 768 ? '1.5rem' : '3rem' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Final Director Review</h2>
-                  <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>CLOSE</button>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.6rem)' }}>Final Director Review</h2>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>App ID: {selectedApp.id.substring(0, 8)}</p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedApp(null)} 
+                    style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      color: '#94a3b8', 
+                      cursor: 'pointer',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem'
+                    }}>
+                    CLOSE
+                  </button>
                </div>
 
                <div className="grid-2">
@@ -164,20 +195,20 @@ function DirectorModule() {
 
                     <Section title="Financial Proposal">
                       <p><strong>Business Sector:</strong> {selectedApp.business?.sector}</p>
-                      <p><strong>Est. Annual Income:</strong> LKR {(selectedApp.production?.estimatedIncome || 0).toLocaleString()}</p>
-                      <p><strong>SME Support Ratio:</strong> 50% Matching Grant</p>
+                      <p><strong>Est. Income:</strong> LKR {(selectedApp.production?.estimatedIncome || 0).toLocaleString()}</p>
+                      <p><strong>Support Ratio:</strong> 50% Matching Grant</p>
                     </Section>
 
-                    <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                      <h4 style={{ margin: '0 0 1rem', fontSize: '0.8rem', color: '#3b82f6', textTransform: 'uppercase' }}>DS Recommendation</h4>
-                      <p style={{ margin: 0, fontSize: '0.9rem' }}>{selectedApp.dsReview?.comments || "Recommended for approval based on eligibility scoring."}</p>
-                      <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>Reviewed by: {selectedApp.dsReview?.reviewedBy}</p>
+                    <div style={{ marginTop: '1.5rem', padding: '1.2rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)', marginBottom: '2rem' }}>
+                      <h4 style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', color: '#3b82f6', textTransform: 'uppercase', fontWeight: 700 }}>DS Recommendation</h4>
+                      <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.6' }}>{selectedApp.dsReview?.comments || "Recommended for approval based on eligibility scoring."}</p>
+                      <p style={{ margin: '0.6rem 0 0', fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic' }}>Reviewed by: {selectedApp.dsReview?.reviewedBy}</p>
                     </div>
                   </div>
 
                   <div>
                     <Section title="Detailed Score Breakdown">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px' }}>
                         <ScoreRow label="Education & NVQ" value={selectedApp.score > 20 ? 25 : 15} />
                         <ScoreRow label="Business Viability" value={15} />
                         <ScoreRow label="Asset Commitment" value={10} />
@@ -191,30 +222,37 @@ function DirectorModule() {
                     <Section title="Equipment for Procurement">
                        <div style={{ maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                           {(selectedApp.equipment?.items || []).map((item, idx) => (
-                            <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', marginBottom: '0.8rem' }}>
-                              <p style={{ margin: 0 }}><strong>{item.name}</strong> ({item.brand})</p>
-                              <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.6 }}>Procurement Cost: LKR {(item.qty * item.unitPrice).toLocaleString()}</p>
+                            <div key={idx} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', marginBottom: '0.6rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <p style={{ margin: 0, fontSize: '0.9rem' }}><strong>{item.name}</strong></p>
+                              <p style={{ margin: '0.1rem 0 0', fontSize: '0.8rem', opacity: 0.6 }}>Cost: LKR {(item.qty * item.unitPrice).toLocaleString()}</p>
                             </div>
                           ))}
                        </div>
-                       <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', textAlign: 'right' }}>
-                         <span style={{ fontSize: '0.8rem' }}>TOTAL GRANT PAYABLE:</span>
-                         <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</div>
+                       <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', textAlign: 'right', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                         <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10b981' }}>TOTAL GRANT PAYABLE:</span>
+                         <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</div>
                        </div>
                     </Section>
                   </div>
                </div>
 
-               <div style={{ marginTop: '4rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+               <div style={{ 
+                 marginTop: '3rem', 
+                 paddingTop: '2rem', 
+                 borderTop: '1px solid rgba(255,255,255,0.05)', 
+                 display: 'flex', 
+                 flexWrap: 'wrap', 
+                 gap: '1rem' 
+               }}>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'approved')}
-                    style={{ flexGrow: 1, padding: '1.2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '1.1rem', minWidth: '250px' }}
+                    style={{ flexGrow: 2, padding: '1.2rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '240px' }}
                   >
                     CONFIRM & SIGN APPROVAL
                   </button>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'rejected')}
-                    style={{ padding: '1.2rem 2.5rem', background: 'transparent', color: '#f43f5e', border: '1px solid #f43f5e', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', minWidth: '150px' }}
+                    style={{ flexGrow: 1, padding: '1.2rem', background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', border: '1px solid #f43f5e', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', minWidth: '120px' }}
                   >
                     REJECT
                   </button>

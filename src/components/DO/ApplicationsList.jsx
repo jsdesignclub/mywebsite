@@ -145,33 +145,41 @@ function ApplicationsList({ statusFilter = 'all', onEdit }) {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.8rem' }}>
+      <div style={{ 
+        marginBottom: '2rem', 
+        display: 'flex', 
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        gap: '1rem'
+      }}>
+        <div style={{ flex: '1', minWidth: '250px' }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(1.4rem, 5vw, 1.8rem)' }}>
             {statusFilter === 'approved' ? 'Approved Grants' : 
              statusFilter === 'pending_ds' ? 'DS Pending Review' :
              statusFilter === 'pending_director' ? 'Director Pending Review' :
              statusFilter === 'rejected' ? 'Rejected Applications' : 'All Applications'}
           </h2>
-          <p style={{ color: '#64748b', margin: '0.5rem 0 0' }}>
+          <p style={{ color: '#64748b', margin: '0.5rem 0 0', fontSize: '0.9rem' }}>
             {statusFilter === 'approved' ? 'Official list of approved SME grants.' : 
              'Track and manage applications across different stages.'}
           </p>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: window.innerWidth < 768 ? '100%' : '300px' }}>
           <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
           <input 
             type="text" 
             placeholder="Search by name or NIC..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={searchStyle}
+            style={{ ...searchStyle, width: '100%' }}
           />
         </div>
       </div>
 
       {filteredApps.length === 0 ? (
-        <div className="glass" style={{ padding: '4rem', textAlign: 'center', color: '#64748b' }}>
+        <div className="glass" style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
           <FileText size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
           <p>No applications found.</p>
         </div>
@@ -179,92 +187,105 @@ function ApplicationsList({ statusFilter = 'all', onEdit }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {filteredApps.map(app => (
             <div key={app.id} className="glass" style={{ ...cardStyle, marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', minWidth: '200px', flexGrow: 1 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', minWidth: '220px', flexGrow: 1 }}>
                   <div style={iconBoxStyle}>
                     <FileText size={20} color="#3b82f6" />
                   </div>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: '1rem' }}>{app.personal?.fullName || 'Unnamed Applicant'}</h4>
-                    <p style={{ margin: '0.1rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                      NIC: {app.personal?.nic} • {app.business?.businessName}
+                    <h4 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>{app.personal?.fullName || 'Unnamed Applicant'}</h4>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                      NIC: {app.personal?.nic}
+                    </p>
+                    <p style={{ margin: '0.1rem 0 0', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                      {app.business?.businessName}
                     </p>
                   </div>
                 </div>
                 
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', justifyContent: 'flex-start' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  alignItems: 'center', 
+                  gap: '1.5rem', 
+                  justifyContent: 'flex-start',
+                  flexGrow: 2,
+                  width: window.innerWidth < 768 ? '100%' : 'auto',
+                  borderTop: window.innerWidth < 768 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                  paddingTop: window.innerWidth < 768 ? '1rem' : '0'
+                }}>
                   <div style={{ minWidth: '80px' }}>
                     <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Status</p>
                     {getStatusBadge(app.status)}
                   </div>
                   
-                  <div style={{ minWidth: '80px' }}>
+                  <div style={{ minWidth: '60px' }}>
                     <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Points</p>
-                    <p style={{ margin: 0, fontWeight: 800, color: app.score > 30 ? '#10b981' : '#3b82f6', fontSize: '1rem' }}>
+                    <p style={{ margin: 0, fontWeight: 800, color: app.score > 30 ? '#10b981' : '#3b82f6', fontSize: '1.1rem' }}>
                       {app.score || 0}
                     </p>
                   </div>
-
-                  <div style={{ minWidth: '100px' }}>
-                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Grant</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
+ 
+                  <div style={{ minWidth: '110px' }}>
+                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Grant Amount</p>
+                    <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: '0.95rem' }}>
                       LKR {(app.equipment?.totalGrant || 0).toLocaleString()}
                     </p>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto' }}>
+ 
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
                     <button 
                       onClick={() => setSelectedApp(app)}
-                      style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}
+                      style={{ ...iconBtnStyle, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}
                       title="View Details"
                     >
-                      <Eye size={16} />
+                      <Eye size={18} />
                     </button>
                     
                     {normalizedRole === 'development_officer' && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); onEdit(app); }}
-                        style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' }}
+                        style={{ ...iconBtnStyle, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' }}
                         title="Edit"
                       >
-                        <Edit3 size={16} />
+                        <Edit3 size={18} />
                       </button>
                     )}
-
+ 
                     {normalizedRole === 'divisional_secretary' && app.status === 'pending_ds' && (
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '0.6rem' }}>
                         <button 
                           onClick={(e) => handleAction(e, app.id, 'approved')}
-                          style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}
-                          title="Forward to Director"
+                          style={{ ...iconBtnStyle, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}
+                          title="Forward"
                         >
-                          <CheckCircle size={16} />
+                          <CheckCircle size={18} />
                         </button>
                         <button 
                           onClick={(e) => handleAction(e, app.id, 'rejected')}
-                          style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }}
+                          style={{ ...iconBtnStyle, color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }}
                           title="Reject"
                         >
-                          <XCircle size={16} />
+                          <XCircle size={18} />
                         </button>
                       </div>
                     )}
-
+ 
                     {normalizedRole === 'director' && app.status === 'pending_director' && (
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '0.6rem' }}>
                         <button 
                           onClick={(e) => handleAction(e, app.id, 'approved')}
-                          style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}
+                          style={{ ...iconBtnStyle, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}
                           title="Final Approve"
                         >
-                          <CheckCircle size={16} />
+                          <CheckCircle size={18} />
                         </button>
                         <button 
                           onClick={(e) => handleAction(e, app.id, 'rejected')}
-                          style={{ ...iconBtnStyle, width: '36px', height: '36px', color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }}
+                          style={{ ...iconBtnStyle, color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }}
                           title="Reject"
                         >
-                          <XCircle size={16} />
+                          <XCircle size={18} />
                         </button>
                       </div>
                     )}
@@ -275,86 +296,120 @@ function ApplicationsList({ statusFilter = 'all', onEdit }) {
           ))}
         </div>
       )}
-
+ 
       {/* Detail Modal */}
       {selectedApp && (
-        <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
-          <div className="glass animate-fade-in" style={modalContentStyle} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2 style={{ margin: 0 }}>Application Details</h2>
-              <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
-                <X size={24} />
+        <div style={{
+          ...modalOverlayStyle,
+          padding: window.innerWidth < 768 ? '1rem' : '2rem'
+        }} onClick={() => setSelectedApp(null)}>
+          <div className="glass animate-fade-in" style={{
+            ...modalContentStyle,
+            padding: window.innerWidth < 768 ? '1.5rem' : '3rem',
+            borderRadius: '16px'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.6rem)' }}>Application Dossier</h2>
+                <p style={{ margin: '0.3rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>Ref ID: {selectedApp.id.substring(0, 8).toUpperCase()}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedApp(null)} 
+                style={{ 
+                  background: 'rgba(255,255,255,0.03)', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  color: '#94a3b8', 
+                  cursor: 'pointer',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                <X size={20} />
               </button>
             </div>
-
+ 
             <div className="grid-2">
               <div>
-                <DetailSection icon={<UserIcon size={18}/>} title="Personal Info">
-                  <p><strong>Name:</strong> {selectedApp.personal?.fullName}</p>
+                <DetailSection icon={<UserIcon size={18}/>} title="Personal Details">
+                  <p><strong>Full Name:</strong> {selectedApp.personal?.fullName}</p>
                   <p><strong>NIC:</strong> {selectedApp.personal?.nic}</p>
-                  <p><strong>Address:</strong> {selectedApp.personal?.address}</p>
+                  <p><strong>Permanent Address:</strong> {selectedApp.personal?.address}</p>
                   <p><strong>Phone:</strong> {selectedApp.personal?.phone}</p>
                 </DetailSection>
-
-                <DetailSection icon={<Briefcase size={18}/>} title="Business Details">
-                  <p><strong>Business Name:</strong> {selectedApp.business?.businessName}</p>
+ 
+                <DetailSection icon={<Briefcase size={18}/>} title="Business Profile">
+                  <p><strong>Entity Name:</strong> {selectedApp.business?.businessName}</p>
                   <p><strong>Registration No:</strong> {selectedApp.business?.regNo}</p>
                   <p><strong>Grant Requested:</strong> LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</p>
                 </DetailSection>
               </div>
-
+ 
               <div>
-                <DetailSection icon={<GraduationCap size={18}/>} title="Qualifications">
-                  <p><strong>NVQ Level:</strong> {selectedApp.training?.nvqLevel || 'N/A'}</p>
-                  <p><strong>Degree:</strong> {selectedApp.training?.degree || 'N/A'}</p>
-                  <p><strong>Eligibility Score:</strong> <span style={{ color: '#10b981', fontWeight: 800 }}>{selectedApp.score || 0} pts</span></p>
+                <DetailSection icon={<GraduationCap size={18}/>} title="Eligibility Metrics">
+                  <p><strong>NVQ Professional Level:</strong> {selectedApp.training?.nvqLevel || 'N/A'}</p>
+                  <p><strong>Educational Degree:</strong> {selectedApp.training?.degree || 'N/A'}</p>
+                  <p><strong>System Score:</strong> <span style={{ color: '#10b981', fontWeight: 800 }}>{selectedApp.score || 0} Points</span></p>
                 </DetailSection>
-
-                <DetailSection icon={<PenTool size={18}/>} title="Requested Equipment">
+ 
+                <DetailSection icon={<PenTool size={18}/>} title="Equipment Breakdown">
                   {(selectedApp.equipment?.items || []).map((item, idx) => (
-                    <div key={idx} style={{ marginBottom: '0.8rem', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                      <p style={{ margin: 0 }}><strong>{item.name}</strong> ({item.brand})</p>
-                      <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.7 }}>LKR {item.unitPrice.toLocaleString()} x {item.qty}</p>
-                      {item.quotationData && (
-                        <button 
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = item.quotationData;
-                            link.download = `quotation_${item.name}.png`;
-                            link.click();
-                          }}
-                          style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: '0.8rem' }}
-                        >
-                          <Download size={14} /> Download Quotation
-                        </button>
-                      )}
+                    <div key={idx} style={{ marginBottom: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p style={{ margin: 0, fontWeight: 600 }}>{item.name}</p>
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>{item.brand} • {item.model}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.8rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: '#3b82f6' }}>LKR {(item.unitPrice * item.qty).toLocaleString()}</span>
+                        {item.quotationData && (
+                          <button 
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = item.quotationData;
+                              link.download = `quotation_${item.name}.png`;
+                              link.click();
+                            }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', cursor: 'pointer', fontSize: '0.75rem', padding: '0.4rem 0.8rem', borderRadius: '6px' }}
+                          >
+                            <Download size={12} /> Quotation
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </DetailSection>
               </div>
             </div>
-
-            {normalizedRole === 'divisional_secretary' && selectedApp.status === 'pending_ds' && (
-              <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '1rem' }}>
+ 
+            {(userRole === 'divisional_secretary' && selectedApp.status === 'pending_ds') || 
+             (userRole === 'director' && selectedApp.status === 'pending_director') ? (
+              <div style={{ 
+                marginTop: '3rem', 
+                paddingTop: '2rem', 
+                borderTop: '1px solid rgba(255,255,255,0.05)', 
+                display: 'flex', 
+                flexWrap: 'wrap',
+                gap: '1rem' 
+              }}>
                 <button 
                   onClick={(e) => { handleAction(e, selectedApp.id, 'approved'); setSelectedApp(null); }}
-                  style={{ flexGrow: 1, padding: '1rem', background: '#10b981', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1.1rem' }}
+                  style={{ flexGrow: 1, padding: '1.2rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
                 >
-                  APPROVE NOW
+                  APPROVE APPLICATION
                 </button>
                 <button 
                   onClick={(e) => { handleAction(e, selectedApp.id, 'rejected'); setSelectedApp(null); }}
-                  style={{ flexGrow: 1, padding: '1rem', background: '#f43f5e', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1.1rem' }}
+                  style={{ flexGrow: 1, padding: '1.2rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid #f43f5e', borderRadius: '12px', color: '#f43f5e', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
                 >
-                  REJECT & ADD REASON
+                  REJECT & ADD COMMENTS
                 </button>
               </div>
-            )}
+            ) : null}
             
-            {selectedApp.status === 'rejected' && selectedApp.dsReview?.comments && (
-              <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '12px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-                <p style={{ margin: 0, color: '#f43f5e', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Rejection Reason:</p>
-                <p style={{ margin: 0, color: '#fff' }}>{selectedApp.dsReview.comments}</p>
+            {selectedApp.status === 'rejected' && (selectedApp.dsReview?.comments || selectedApp.directorReview?.comments) && (
+              <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(244, 63, 94, 0.1)', borderRadius: '14px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                <p style={{ margin: 0, color: '#f43f5e', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.5rem', fontWeight: 700 }}>Reviewer Comments:</p>
+                <p style={{ margin: 0, color: '#fff', lineHeight: '1.5', fontSize: '0.95rem' }}>{selectedApp.directorReview?.comments || selectedApp.dsReview?.comments}</p>
               </div>
             )}
           </div>
@@ -366,12 +421,14 @@ function ApplicationsList({ statusFilter = 'all', onEdit }) {
 
 function DetailSection({ icon, title, children }) {
   return (
-    <div style={{ marginBottom: '2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem', color: '#10b981' }}>
-        {icon}
-        <h3 style={{ margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</h3>
+    <div style={{ marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.2rem', color: '#10b981' }}>
+        <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
+          {icon}
+        </div>
+        <h3 style={{ margin: 0, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>{title}</h3>
       </div>
-      <div style={{ paddingLeft: '2.5rem', fontSize: '0.95rem', color: '#cbd5e1' }}>
+      <div style={{ paddingLeft: '0.5rem', fontSize: '0.95rem', color: '#cbd5e1', lineHeight: '1.8' }}>
         {children}
       </div>
     </div>
@@ -379,9 +436,9 @@ function DetailSection({ icon, title, children }) {
 }
 
 const iconBtnStyle = {
-  width: '40px',
-  height: '40px',
-  borderRadius: '8px',
+  width: '38px',
+  height: '38px',
+  borderRadius: '10px',
   border: 'none',
   display: 'flex',
   alignItems: 'center',
@@ -393,36 +450,35 @@ const iconBtnStyle = {
 const modalOverlayStyle = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,0.8)',
-  backdropFilter: 'blur(8px)',
+  background: 'rgba(0,0,0,0.85)',
+  backdropFilter: 'blur(10px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 1000,
-  padding: '2rem'
+  zIndex: 1000
 };
 
 const modalContentStyle = {
   width: '100%',
-  maxWidth: '900px',
-  maxHeight: '90vh',
+  maxWidth: '960px',
+  maxHeight: '92vh',
   overflowY: 'auto',
-  padding: '3rem',
   background: '#0c111d',
-  border: '1px solid rgba(255,255,255,0.1)'
+  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
 };
 
 const cardStyle = {
-  padding: '1.5rem 2rem',
-  transition: 'transform 0.2s',
-  cursor: 'pointer'
+  padding: '1.5rem',
+  transition: 'all 0.2s',
+  border: '1px solid rgba(255,255,255,0.05)'
 };
 
 const iconBoxStyle = {
-  width: '48px',
-  height: '48px',
+  width: '44px',
+  height: '44px',
   borderRadius: '12px',
-  background: 'rgba(59, 130, 246, 0.1)',
+  background: 'rgba(59, 130, 246, 0.08)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center'
@@ -430,33 +486,26 @@ const iconBoxStyle = {
 
 const badgeStyle = {
   display: 'inline-block',
-  padding: '0.25rem 0.75rem',
-  borderRadius: '99px',
-  fontSize: '0.75rem',
-  fontWeight: 600,
-  marginTop: '0.2rem'
-};
-
-const viewBtnStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.6rem 1.2rem',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '8px',
-  color: '#cbd5e1',
-  cursor: 'pointer'
+  padding: '0.3rem 0.8rem',
+  borderRadius: '12px',
+  fontSize: '0.7rem',
+  fontWeight: 700,
+  marginTop: '0.2rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.02em'
 };
 
 const searchStyle = {
-  padding: '0.7rem 1rem 0.7rem 2.8rem',
+  padding: '0.8rem 1rem 0.8rem 3rem',
   background: 'rgba(255,255,255,0.03)',
   border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '10px',
+  borderRadius: '12px',
   color: '#fff',
-  width: '300px',
-  outline: 'none'
+  outline: 'none',
+  fontSize: '0.9rem',
+  transition: 'border-color 0.2s'
 };
+
+
 
 export default ApplicationsList;

@@ -74,45 +74,45 @@ function DSModule() {
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', margin: 0 }}>Approval Queue</h2>
-        <p style={{ color: '#64748b' }}>Review and action applications submitted by Development Officers.</p>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', margin: 0 }}>Approval Queue</h2>
+        <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.5rem' }}>Review and action applications submitted by Development Officers.</p>
       </div>
 
       <div className="grid-2">
         {applications.map(app => (
-          <div key={app.id} className="glass card-hover" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => setSelectedApp(app)}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', gap: '1rem' }}>
+          <div key={app.id} className="glass" style={{ padding: '1.2rem', cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setSelectedApp(app)}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.2rem', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ padding: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px' }}>
-                  <FileText color="#3b82f6" size={24} />
+                <div style={{ padding: '0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px' }}>
+                  <FileText color="#3b82f6" size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0 }}>{app.personal?.fullName}</h4>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>NIC: {app.personal?.nic}</p>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#fff' }}>{app.personal?.fullName}</h4>
+                  <p style={{ margin: '0.1rem 0 0', fontSize: '0.75rem', color: '#64748b' }}>NIC: {app.personal?.nic}</p>
                 </div>
               </div>
               <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
-                <span style={{ fontSize: '1.2rem', fontWeight: 800, color: app.score > 30 ? '#10b981' : '#3b82f6' }}>{app.score || 0} pts</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: app.score > 30 ? '#10b981' : '#3b82f6' }}>{app.score || 0} pts</span>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-               <p style={{ margin: 0, fontSize: '0.85rem' }}><strong>Business:</strong> {app.business?.businessName}</p>
-               <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem' }}><strong>Grant:</strong> LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</p>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '8px', marginBottom: '1.2rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+               <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1' }}><strong>Business:</strong> {app.business?.businessName}</p>
+               <p style={{ margin: '0.4rem 0 0', fontSize: '0.8rem', color: '#10b981' }}><strong>Grant:</strong> LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</p>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'approved'); }}
-                style={{ flexGrow: 1, padding: '0.7rem', background: '#10b981', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '150px' }}
+                style={{ flexGrow: 1, padding: '0.8rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.85rem' }}
               >
-                <CheckCircle size={18} /> Approve
+                <CheckCircle size={16} /> Forward
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'rejected'); }}
-                style={{ flexGrow: 1, padding: '0.7rem', background: '#f43f5e', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '100px' }}
+                style={{ flexGrow: 1, padding: '0.8rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '8px', color: '#f43f5e', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.85rem' }}
               >
-                <XCircle size={18} /> Reject
+                <XCircle size={16} /> Reject
               </button>
             </div>
           </div>
@@ -120,7 +120,7 @@ function DSModule() {
       </div>
 
       {applications.length === 0 && (
-        <div className="glass" style={{ padding: '5rem', textAlign: 'center', color: '#64748b' }}>
+        <div className="glass" style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
           <Clock size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
           <p>No pending applications in your queue.</p>
         </div>
@@ -129,19 +129,42 @@ function DSModule() {
       {/* Detailed Review Modal (Reusing/Extending View Logic) */}
       <AnimatePresence>
         {selectedApp && (
-          <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
+          <div style={{
+            ...modalOverlayStyle,
+            padding: window.innerWidth < 768 ? '1rem' : '2rem'
+          }} onClick={() => setSelectedApp(null)}>
              <motion.div 
                className="glass-card" 
-               style={{ ...modalContentStyle, padding: 0 }} 
+               style={{ 
+                 ...modalContentStyle, 
+                 padding: 0,
+                 borderRadius: '16px',
+                 overflow: 'hidden'
+               }} 
                onClick={e => e.stopPropagation()}
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               exit={{ opacity: 0, scale: 0.9 }}
+               initial={{ opacity: 0, y: 50 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: 50 }}
              >
-                <div style={{ padding: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Review Application</h2>
-                  <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>Close</button>
+                <div style={{ padding: window.innerWidth < 768 ? '1.5rem' : '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.6rem)' }}>Full Review</h2>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>App ID: {selectedApp.id.substring(0, 8)}</p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedApp(null)} 
+                    style={{ 
+                      background: 'rgba(255,255,255,0.03)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      color: '#94a3b8', 
+                      cursor: 'pointer',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem'
+                    }}>
+                    Close
+                  </button>
                 </div>
                 
                 <div className="grid-2">
@@ -165,41 +188,48 @@ function DSModule() {
                   {/* Right Column */}
                   <div>
                     <h5 style={sectionHeaderStyle}>Scoring Breakdown</h5>
-                    <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)', marginBottom: '1.5rem' }}>
-                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                         <span>Eligibility Score:</span>
-                         <span style={{ fontWeight: 700, color: '#3b82f6' }}>{selectedApp.score || 0} Points</span>
+                    <div style={{ padding: '1.2rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)', marginBottom: '2rem' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                         <span style={{ fontSize: '0.9rem' }}>Eligibility Score:</span>
+                         <span style={{ fontWeight: 800, color: '#3b82f6' }}>{selectedApp.score || 0} Points</span>
                        </div>
                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                         <span>Recommended Grant:</span>
-                         <span style={{ fontWeight: 700, color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</span>
+                         <span style={{ fontSize: '0.9rem' }}>Grant Amount:</span>
+                         <span style={{ fontWeight: 800, color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</span>
                        </div>
                     </div>
 
                     <h5 style={sectionHeaderStyle}>Required Equipment</h5>
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                    <div style={{ maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1.5rem' }}>
                       {(selectedApp.equipment?.items || []).map((item, idx) => (
-                        <div key={idx} style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                          <p style={{ margin: 0 }}><strong>{item.name}</strong> ({item.qty} units)</p>
-                          <p style={{ margin: 0, opacity: 0.6 }}>Total: LKR {(item.qty * item.unitPrice).toLocaleString()}</p>
+                        <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', marginBottom: '0.8rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <p style={{ margin: 0, fontSize: '0.9rem' }}><strong>{item.name}</strong></p>
+                          <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', opacity: 0.6 }}>{item.qty} units @ LKR {item.unitPrice.toLocaleString()}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
                 
-                <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ 
+                  marginTop: '2.5rem', 
+                  paddingTop: '2rem', 
+                  borderTop: '1px solid rgba(255,255,255,0.05)', 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: '1rem' 
+                }}>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'approved')}
-                    style={{ flexGrow: 1, padding: '1rem', background: '#10b981', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
+                    style={{ flexGrow: 2, padding: '1.2rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '220px' }}
                   >
-                    RECOMMEND TO DIRECTOR
+                    FORWARD TO DIRECTOR
                   </button>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'rejected')}
-                    style={{ flexGrow: 1, padding: '1rem', background: '#f43f5e', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
+                    style={{ flexGrow: 1, padding: '1.2rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid #f43f5e', borderRadius: '12px', color: '#f43f5e', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '150px' }}
                   >
-                    REJECT APPLICATION
+                    REJECT
                   </button>
                 </div>
               </div>
@@ -214,24 +244,23 @@ function DSModule() {
 const modalOverlayStyle = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,0.8)',
-  backdropFilter: 'blur(8px)',
+  background: 'rgba(0,0,0,0.85)',
+  backdropFilter: 'blur(10px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 1000,
-  padding: '2rem'
+  zIndex: 1000
 };
 
 const modalContentStyle = {
   width: '100%',
-  maxWidth: '1000px',
-  maxHeight: '90vh',
+  maxWidth: '960px',
+  maxHeight: '92vh',
   overflowY: 'auto',
-  padding: '3rem',
   background: '#0c111d',
-  border: '1px solid rgba(255,255,255,0.1)'
+  border: '1px solid rgba(255,255,255,0.08)'
 };
+
 
 const sectionHeaderStyle = {
   fontSize: '0.75rem',

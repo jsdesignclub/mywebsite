@@ -71,29 +71,30 @@ function Dashboard() {
       default:
         return (
           <div className="animate-fade-in">
-            <header style={{ textAlign: 'left', marginBottom: '3rem' }}>
-              <h1 style={{ fontSize: '2.5rem', margin: 0 }}>System Overview</h1>
-              <p style={{ color: '#94a3b8', margin: '0.5rem 0 0' }}>Welcome back, <strong>{userRole || 'development_officer'}</strong>. Here is the latest from your district.</p>
+            <header style={{ textAlign: 'left', marginBottom: 'clamp(1.5rem, 5vw, 3rem)' }}>
+              <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 2.5rem)', margin: 0 }}>System Overview</h1>
+              <p style={{ color: '#94a3b8', margin: '0.5rem 0 0', fontSize: '0.95rem' }}>Welcome back, <strong>{userRole || 'Development Officer'}</strong>.</p>
             </header>
 
             <div className="grid-2">
-              <div className="glass" style={{ padding: '2rem', textAlign: 'left' }}>
-                <h3 style={{ margin: '0 0 1rem' }}>Active Applications</h3>
-                <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                  <p>No active applications found.</p>
+              <div className="glass" style={{ padding: 'clamp(1rem, 4vw, 2rem)', textAlign: 'left' }}>
+                <h3 style={{ margin: '0 0 1rem', fontSize: '1.2rem' }}>Active Applications</h3>
+                <div style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px', background: 'rgba(255,255,255,0.01)' }}>
+                  <LayoutDashboard size={32} style={{ marginBottom: '0.8rem', opacity: 0.3 }} />
+                  <p style={{ fontSize: '0.85rem' }}>No active applications found.</p>
                 </div>
               </div>
 
-              <div className="glass" style={{ padding: '2rem', textAlign: 'left' }}>
-                <h3 style={{ margin: '0 0 1rem' }}>Recent Notifications</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="glass" style={{ padding: 'clamp(1rem, 4vw, 2rem)', textAlign: 'left' }}>
+                <h3 style={{ margin: '0 0 1.5rem', fontSize: '1.2rem' }}>Recent Notifications</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                   {[1, 2].map(i => (
-                    <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem', display: 'flex', gap: '1rem' }}>
-                      <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', height: 'fit-content' }}>
-                        <Bell size={16} color="#3b82f6" />
+                    <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.8rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <div style={{ padding: '0.6rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px', height: 'fit-content' }}>
+                        <Bell size={18} color="#3b82f6" />
                       </div>
                       <div>
-                        <p style={{ fontSize: '0.9rem', margin: 0 }}>System initialized for Uva Province.</p>
+                        <p style={{ fontSize: '0.9rem', margin: 0, color: '#e2e8f0', fontWeight: 500 }}>System initialized for Province.</p>
                         <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Just now</span>
                       </div>
                     </div>
