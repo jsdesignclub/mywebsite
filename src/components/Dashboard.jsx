@@ -1,0 +1,208 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { User, LayoutDashboard, Bell, Search } from 'lucide-react';
+import { auth } from '../firebase';
+import DOModule from './DO/DOModule';
+import ApplicationsList from './DO/ApplicationsList';
+import DSModule from './DSModule';
+import DirectorModule from './DirectorModule';
+import AccountantModule from './AccountantModule';
+import AdminModule from './AdminModule';
+import Sidebar from './Sidebar';
+import { Menu } from 'lucide-react';
+
+function Dashboard() {
+  const { currentUser, userRole } = useAuth();
+  const normalizedRole = userRole?.toLowerCase();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [editingApp, setEditingApp] = useState(null);
+
+  const handleLogout = () => {
+    auth.signOut();
+  };
+
+  const renderContent = () => {
+    // Role-based defaults
+    if (normalizedRole === 'divisional_secretary' && (activeTab === 'overview' || activeTab === 'approval-queue')) {
+      return <DSModule />;
+    }
+    if (normalizedRole === 'director' && (activeTab === 'overview' || activeTab === 'director-queue')) {
+      return <DirectorModule />;
+    }
+    if (normalizedRole === 'accountant' && (activeTab === 'overview' || activeTab === 'procurement')) {
+      return <AccountantModule statusFilter="approved" />;
+    }
+    if (normalizedRole === 'admin' && (activeTab === 'overview' || activeTab === 'user-mgmt')) {
+      return <AdminModule />;
+    }
+
+    switch (activeTab) {
+      case 'approval-queue':
+        return <DSModule />;
+      case 'director-queue':
+        return <DirectorModule />;
+      case 'procurement':
+        return <AccountantModule statusFilter="approved" />;
+      case 'ordered-app':
+        return <AccountantModule statusFilter="ordered" />;
+      case 'user-mgmt':
+      case 'sectors':
+        return <AdminModule />;
+      case 'new-app':
+        return <DOModule initialData={editingApp} onComplete={() => setEditingApp(null)} />;
+      case 'pending-app':
+        return <ApplicationsList statusFilter="pending_ds" onEdit={(app) => {
+          setEditingApp(app);
+          setActiveTab('new-app');
+        }} />;
+      case 'approved-app':
+        return <ApplicationsList statusFilter="approved" onEdit={(app) => {
+          setEditingApp(app);
+          setActiveTab('new-app');
+        }} />;
+      case 'all-app':
+        return <ApplicationsList statusFilter="all" onEdit={(app) => {
+          setEditingApp(app);
+          setActiveTab('new-app');
+        }} />;
+      case 'overview':
+      default:
+        return (
+          <div className="animate-fade-in">
+            <header style={{ textAlign: 'left', marginBottom: '3rem' }}>
+              <h1 style={{ fontSize: '2.5rem', margin: 0 }}>System Overview</h1>
+              <p style={{ color: '#94a3b8', margin: '0.5rem 0 0' }}>Welcome back, <strong>{userRole || 'development_officer'}</strong>. Here is the latest from your district.</p>
+            </header>
+
+            <div 
+              className="grid-2"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '2rem'
+              }}
+            >
+              <div className="glass" style={{ padding: '2rem', textAlign: 'left' }}>
+                <h3 style={{ margin: '0 0 1rem' }}>Active Applications</h3>
+                <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                  <p>No active applications found.</p>
+                </div>
+              </div>
+
+              <div className="glass" style={{ padding: '2rem', textAlign: 'left' }}>
+                <h3 style={{ margin: '0 0 1rem' }}>Recent Notifications</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[1, 2].map(i => (
+                    <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem', display: 'flex', gap: '1rem' }}>
+                      <div style={{ padding: '0.5rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', height: 'fit-content' }}>
+                        <Bell size={16} color="#3b82f6" />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '0.9rem', margin: 0 }}>System initialized for Uva Province.</p>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Just now</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '2rem', padding: '0' }}>
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onLogout={handleLogout} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        userRole={userRole}
+      />
+      
+      <main style={{ 
+        flexGrow: 1, 
+        paddingTop: '1rem', 
+        minWidth: 0,
+        padding: '1rem' 
+      }}>
+        {/* Top bar with user profile */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '2rem',
+          gap: '1rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                padding: '0.6rem',
+                borderRadius: '10px',
+                color: '#fff',
+                cursor: 'pointer'
+              }}
+              className="mobile-only"
+            >
+              <Menu size={24} />
+            </button>
+            <div style={{ position: 'relative', width: 'clamp(200px, 30vw, 400px)' }} className="desktop-only">
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 1rem 0.7rem 2.8rem',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="glass" style={{ 
+              padding: '0.5rem 0.8rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.8rem',
+              borderRadius: '12px',
+              maxWidth: 'fit-content'
+            }}>
+              <div style={{ textAlign: 'right' }} className="desktop-only">
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>{currentUser.email}</p>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: '#3b82f6', textTransform: 'uppercase' }}>{userRole || 'Development Officer'}</p>
+              </div>
+              <div style={{ 
+                width: '32px', 
+                height: '32px', 
+                borderRadius: '8px', 
+                background: 'linear-gradient(135deg, #1f4e79 0%, #2e75b6 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <User color="#fff" size={16} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {renderContent()}
+      </main>
+    </div>
+  );
+}
+
+export default Dashboard;
