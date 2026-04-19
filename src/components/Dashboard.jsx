@@ -76,14 +76,7 @@ function Dashboard() {
               <p style={{ color: '#94a3b8', margin: '0.5rem 0 0' }}>Welcome back, <strong>{userRole || 'development_officer'}</strong>. Here is the latest from your district.</p>
             </header>
 
-            <div 
-              className="grid-2"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '2rem'
-              }}
-            >
+            <div className="grid-2">
               <div className="glass" style={{ padding: '2rem', textAlign: 'left' }}>
                 <h3 style={{ margin: '0 0 1rem' }}>Active Applications</h3>
                 <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', border: '1px dashed rgba(255,255,255,0.05)', borderRadius: '12px' }}>
@@ -114,7 +107,7 @@ function Dashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '2rem', padding: '0' }}>
+    <div className="do-container" style={{ display: 'flex', gap: '2rem', padding: '0' }}>
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 

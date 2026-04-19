@@ -36,11 +36,10 @@ function Login() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass"
+        className="glass-card"
         style={{
           width: '100%',
           maxWidth: '400px',
-          padding: '3rem',
           textAlign: 'left'
         }}
       >

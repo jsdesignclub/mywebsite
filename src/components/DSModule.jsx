@@ -78,10 +78,10 @@ function DSModule() {
         <p style={{ color: '#64748b' }}>Review and action applications submitted by Development Officers.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid-2">
         {applications.map(app => (
           <div key={app.id} className="glass card-hover" style={{ padding: '1.5rem', cursor: 'pointer' }} onClick={() => setSelectedApp(app)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <div style={{ padding: '0.8rem', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px' }}>
                   <FileText color="#3b82f6" size={24} />
@@ -91,7 +91,7 @@ function DSModule() {
                   <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>NIC: {app.personal?.nic}</p>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
                 <span style={{ fontSize: '1.2rem', fontWeight: 800, color: app.score > 30 ? '#10b981' : '#3b82f6' }}>{app.score || 0} pts</span>
               </div>
             </div>
@@ -101,16 +101,16 @@ function DSModule() {
                <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem' }}><strong>Grant:</strong> LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.8rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'approved'); }}
-                style={{ flexGrow: 1, padding: '0.7rem', background: '#10b981', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ flexGrow: 1, padding: '0.7rem', background: '#10b981', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '150px' }}
               >
-                <CheckCircle size={18} /> Forward to Director
+                <CheckCircle size={18} /> Approve
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'rejected'); }}
-                style={{ flexGrow: 1, padding: '0.7rem', background: '#f43f5e', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ flexGrow: 1, padding: '0.7rem', background: '#f43f5e', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '100px' }}
               >
                 <XCircle size={18} /> Reject
               </button>
@@ -131,19 +131,20 @@ function DSModule() {
         {selectedApp && (
           <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
              <motion.div 
-               className="glass" 
-               style={modalContentStyle} 
+               className="glass-card" 
+               style={{ ...modalContentStyle, padding: 0 }} 
                onClick={e => e.stopPropagation()}
                initial={{ opacity: 0, scale: 0.9 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 0.9 }}
              >
+                <div style={{ padding: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                  <h2 style={{ margin: 0 }}>Review Application</h2>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Review Application</h2>
                   <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>Close</button>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div className="grid-2">
                   {/* Left Column */}
                   <div>
                     <h5 style={sectionHeaderStyle}>Applicant Identity</h5>
@@ -186,21 +187,22 @@ function DSModule() {
                     </div>
                   </div>
                 </div>
-
-                <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '1rem' }}>
+                
+                <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'approved')}
-                    style={{ flexGrow: 1, padding: '1rem', background: '#10b981', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1.1rem' }}
+                    style={{ flexGrow: 1, padding: '1rem', background: '#10b981', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
                   >
                     RECOMMEND TO DIRECTOR
                   </button>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'rejected')}
-                    style={{ flexGrow: 1, padding: '1rem', background: '#f43f5e', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1.1rem' }}
+                    style={{ flexGrow: 1, padding: '1rem', background: '#f43f5e', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '1rem', minWidth: '200px' }}
                   >
                     REJECT APPLICATION
                   </button>
                 </div>
+              </div>
              </motion.div>
           </div>
         )}

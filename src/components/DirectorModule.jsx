@@ -86,10 +86,10 @@ function DirectorModule() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+      <div className="grid-2">
         {filteredApps.map(app => (
           <div key={app.id} className="glass card-hover" style={{ padding: '2rem', cursor: 'pointer', border: '1px solid rgba(16, 185, 129, 0.2)' }} onClick={() => setSelectedApp(app)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                  <div style={{ padding: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px' }}>
                    <ShieldCheck color="#10b981" size={28} />
@@ -99,7 +99,7 @@ function DirectorModule() {
                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase' }}>Recommended by DS</span>
                  </div>
                </div>
-               <div style={{ textAlign: 'right' }}>
+               <div style={{ textAlign: 'right', marginLeft: 'auto' }}>
                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#10b981' }}>{app.score || 0}</div>
                  <div style={{ fontSize: '0.6rem', color: '#64748b' }}>TOTAL SCORE</div>
                </div>
@@ -110,16 +110,16 @@ function DirectorModule() {
                 <p style={{ margin: 0, fontSize: '0.9rem' }}><strong>Requested Grant:</strong> <span style={{ color: '#10b981', fontWeight: 700 }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</span></p>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'approved'); }}
-                style={{ flexGrow: 2, padding: '0.8rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                style={{ flexGrow: 2, padding: '0.8rem', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minWidth: '200px' }}
               >
                 <CheckCircle size={20} /> FINAL APPROVAL
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleAction(app.id, 'rejected'); }}
-                style={{ flexGrow: 1, padding: '0.8rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '10px', color: '#f43f5e', fontWeight: 600, cursor: 'pointer' }}
+                style={{ flexGrow: 1, padding: '0.8rem', background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '10px', color: '#f43f5e', fontWeight: 600, cursor: 'pointer', minWidth: '100px' }}
               >
                 REJECT
               </button>
@@ -141,19 +141,20 @@ function DirectorModule() {
         {selectedApp && (
           <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
             <motion.div 
-               className="glass" 
-               style={modalContentStyle} 
+               className="glass-card" 
+               style={{ ...modalContentStyle, padding: 0 }} 
                onClick={e => e.stopPropagation()}
                initial={{ opacity: 0, y: 30 }}
                animate={{ opacity: 1, y: 0 }}
                exit={{ opacity: 0, y: 30 }}
             >
+               <div style={{ padding: '2rem' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ margin: 0 }}>Final Director Review</h2>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Final Director Review</h2>
                   <button onClick={() => setSelectedApp(null)} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>CLOSE</button>
                </div>
 
-               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+               <div className="grid-2">
                   <div>
                     <Section title="Applicant Credentials">
                       <p><strong>Name:</strong> {selectedApp.personal?.fullName}</p>
@@ -204,19 +205,20 @@ function DirectorModule() {
                   </div>
                </div>
 
-               <div style={{ marginTop: '4rem', display: 'flex', gap: '1.5rem' }}>
+               <div style={{ marginTop: '4rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'approved')}
-                    style={{ flexGrow: 1, padding: '1.2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '1.2rem', boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)' }}
+                    style={{ flexGrow: 1, padding: '1.2rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', fontSize: '1.1rem', minWidth: '250px' }}
                   >
                     CONFIRM & SIGN APPROVAL
                   </button>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'rejected')}
-                    style={{ padding: '1.2rem 2.5rem', background: 'transparent', color: '#f43f5e', border: '1px solid #f43f5e', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}
+                    style={{ padding: '1.2rem 2.5rem', background: 'transparent', color: '#f43f5e', border: '1px solid #f43f5e', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', minWidth: '150px' }}
                   >
                     REJECT
                   </button>
+               </div>
                </div>
             </motion.div>
           </div>

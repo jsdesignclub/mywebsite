@@ -47,8 +47,23 @@ body {
   border-radius: 16px;
 }
 
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 2.5rem;
+}
+
+@media (max-width: 767px) {
+  .glass-card {
+    padding: 1.5rem;
+  }
+}
+
 h1 {
-  font-size: 3.2em;
+  font-size: clamp(2rem, 8vw, 3.2rem);
   line-height: 1.1;
   background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
   background-clip: text;
@@ -59,7 +74,7 @@ h1 {
 
 .subtitle {
   color: var(--text-dim);
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 4vw, 1.2rem);
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
 }
@@ -114,10 +129,24 @@ h1 {
     min-height: 48px; /* Better finger-tap area */
   }
 
+.do-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
   .do-container {
     flex-direction: column !important;
-    padding: 1rem !important;
+    padding: 0 1rem !important;
+    gap: 1.5rem !important;
   }
+}
+
+.mobile-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
   /* Make step navigation scrollable on mobile */
   .steps-container {
