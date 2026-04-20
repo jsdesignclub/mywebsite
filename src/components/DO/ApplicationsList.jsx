@@ -364,6 +364,8 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                   <p><strong>Full Name:</strong> {selectedApp.personal?.fullName}</p>
                   <p><strong>NIC:</strong> {selectedApp.personal?.nic}</p>
                   <p><strong>Permanent Address:</strong> {selectedApp.personal?.address}</p>
+                  <p><strong>DS Division:</strong> {selectedApp.personal?.dsDivision || 'N/A'}</p>
+                  <p><strong>GS Division:</strong> {selectedApp.personal?.gsDivision || 'N/A'}</p>
                   <p><strong>Phone:</strong> {selectedApp.personal?.phone}</p>
                 </DetailSection>
  

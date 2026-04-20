@@ -852,7 +852,8 @@ function AdminModule({ activeTab: externalTab }) {
                     <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>NIC:</strong> {selectedApp.personal?.nic}</p>
                     <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Phone:</strong> {selectedApp.personal?.phone}</p>
                     <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>Address:</strong> {selectedApp.personal?.address}</p>
-                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>GS Division:</strong> {selectedApp.personal?.gsDivision}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>DS Division:</strong> {selectedApp.personal?.dsDivision || 'N/A'}</p>
+                    <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}><strong>GS Division:</strong> {selectedApp.personal?.gsDivision || 'N/A'}</p>
                   </div>
                   <div>
                     <h4 style={{ color: '#3b82f6', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Business & Scoring</h4>

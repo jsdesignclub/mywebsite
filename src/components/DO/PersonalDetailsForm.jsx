@@ -107,8 +107,13 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
         </div>
 
         <div className="form-group">
-          <label style={labelStyle}>GN Division</label>
-          <input type="text" name="gnDivision" value={data.gnDivision || ''} onChange={handleChange} style={inputStyle} placeholder="Enter Code or Name" />
+          <label style={labelStyle}>DS Division</label>
+          <input type="text" name="dsDivision" value={data.dsDivision || ''} onChange={handleChange} style={inputStyle} placeholder="eg: Hali-Ela" />
+        </div>
+
+        <div className="form-group">
+          <label style={labelStyle}>GS Division</label>
+          <input type="text" name="gsDivision" value={data.gsDivision || ''} onChange={handleChange} style={inputStyle} placeholder="Enter Name or Code" />
         </div>
 
         <div className="form-group">

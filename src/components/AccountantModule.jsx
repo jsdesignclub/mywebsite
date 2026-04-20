@@ -329,7 +329,8 @@ function AccountantModule({ statusFilter = 'approved' }) {
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', opacity: 0.6 }}>BENEFICIARY</p>
                     <p style={{ margin: 0, fontWeight: 700 }}>{selectedApp.personal?.fullName}</p>
                     <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem' }}>{selectedApp.business?.businessName}</p>
-                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.8 }}>Division: {selectedApp.division}</p>
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.8 }}>{selectedApp.division} Section | DS: {selectedApp.personal?.dsDivision || 'N/A'}</p>
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', opacity: 0.8 }}>GS Branch: {selectedApp.personal?.gsDivision || 'N/A'}</p>
                   </div>
                   <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1.5rem', borderRadius: '15px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#10b981' }}>AUTHORIZED GRANT</p>
