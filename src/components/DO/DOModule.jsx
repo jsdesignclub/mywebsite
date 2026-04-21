@@ -8,7 +8,7 @@ import ProductionForm from './ProductionForm';
 import EquipmentForm from './EquipmentForm';
 import { db, auth, storage } from '../../firebase';
 import { collection, addDoc, serverTimestamp, updateDoc, doc, getDoc, setDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -170,24 +170,44 @@ function DOModule({ initialData, onComplete }) {
           }
 
           setSubmissionStatus(`Uploading document ${i + 1} of ${items.length}...`);
+          
           try {
             const fileName = `${appId}_${Date.now()}_${item.name.replace(/\s+/g, '_')}`;
             const storageRef = ref(storage, `quotations/${fileName}`);
-            const snapshot = await uploadBytes(storageRef, item.quotationFile);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+            
+            // Use a Promise to handle the resumable upload
+            const downloadURL = await new Promise((resolve, reject) => {
+              const uploadTask = uploadBytesResumable(storageRef, item.quotationFile);
+              
+              uploadTask.on('state_changed', 
+                (snapshot) => {
+                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                  setSubmissionStatus(`Uploading ${item.name}: ${Math.round(progress)}%`);
+                }, 
+                (error) => {
+                  console.error("Upload failed:", error);
+                  reject(error);
+                }, 
+                () => {
+                  getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
+                }
+              );
+            });
             
             updatedItems.push({ 
               ...item, 
-              quotationUrl: downloadURL, // Store permanent URL
+              quotationUrl: downloadURL,
               quotationFile: null,
-              quotationData: null // Clear old base64 if any
+              quotationData: null
             });
           } catch (err) {
             console.error("Storage upload error:", err);
-            updatedItems.push(item);
+            throw new Error(`Failed to upload quotation for ${item.name}. Please check your internet connection.`);
           }
         } else {
-          updatedItems.push(item);
+          // If it's not a new file, ensure quotationFile is null to avoid Firestore errors
+          const { quotationFile, ...rest } = item;
+          updatedItems.push({ ...rest, quotationFile: null });
         }
       }
 
