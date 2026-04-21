@@ -261,14 +261,15 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                   </div>
  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
-                    {(app.equipment?.items || []).some(i => i.quotationData) && (
+                    {(app.equipment?.items || []).some(i => i.quotationUrl || i.quotationData) && (
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          const firstQuote = (app.equipment.items || []).find(i => i.quotationData);
+                          const firstQuote = (app.equipment.items || []).find(i => i.quotationUrl || i.quotationData);
                           if (firstQuote) {
                             const link = document.createElement('a');
-                            link.href = firstQuote.quotationData;
+                            link.href = firstQuote.quotationUrl || firstQuote.quotationData;
+                            link.target = "_blank";
                             link.download = `preview_${app.id.substring(0,8)}.png`;
                             link.click();
                           }
@@ -409,11 +410,11 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                       <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>{item.brand} • {item.model}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.8rem' }}>
                         <span style={{ fontSize: '0.9rem', color: '#3b82f6' }}>LKR {(item.unitPrice * item.qty).toLocaleString()}</span>
-                        {item.quotationData && (
+                        {(item.quotationUrl || item.quotationData) && (
                           <button 
                             onClick={() => {
                               const link = document.createElement('a');
-                              link.href = item.quotationData;
+                              link.href = item.quotationUrl || item.quotationData;
                               link.download = `quotation_${item.name}.png`;
                               link.click();
                             }}

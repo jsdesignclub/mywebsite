@@ -514,14 +514,14 @@ function AdminModule({ activeTab: externalTab }) {
                       <td style={tdStyle}>LKR {(app.equipment?.totalGrant * 2 || 0).toLocaleString()}</td>
                       <td style={tdStyle}><div style={{ fontWeight: 800, color: '#10b981' }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</div></td>
                       <td style={tdStyle}>
-                        {app.equipment?.quotationUrl ? (
+                        { (app.equipment?.items?.[0]?.quotationUrl || app.equipment?.items?.[0]?.quotationData) ? (
                           <a 
-                            href={app.equipment.quotationUrl} 
+                            href={app.equipment.items[0].quotationUrl || app.equipment.items[0].quotationData} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', textDecoration: 'none' }}
                           >
-                            <FileText size={14} /> View PDF
+                            <FileText size={14} /> View
                           </a>
                         ) : <span style={{ opacity: 0.3 }}>-</span>}
                       </td>
@@ -867,21 +867,26 @@ function AdminModule({ activeTab: externalTab }) {
                 <div style={{ marginTop: '2rem' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(59, 130, 246, 0.2)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
                       <h4 style={{ color: '#3b82f6', margin: 0 }}>Equipment & Grant Details</h4>
-                      {selectedApp.equipment?.quotationUrl && (
+                      {(selectedApp.equipment?.quotationUrl || selectedApp.equipment?.items?.[0]?.quotationUrl || selectedApp.equipment?.items?.[0]?.quotationData) && (
                         <a 
-                          href={selectedApp.equipment.quotationUrl} 
+                          href={selectedApp.equipment.quotationUrl || selectedApp.equipment.items[0].quotationUrl || selectedApp.equipment.items[0].quotationData} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           style={{ fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'rgba(16, 185, 129, 0.1)', padding: '0.3rem 0.8rem', borderRadius: '6px' }}
                         >
-                          <ExternalLink size={14} /> View Original Quotation
+                          <ExternalLink size={14} /> View Quotation
                         </a>
                       )}
                    </div>
                   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px' }}>
                     {(selectedApp.equipment?.items || []).map((item, idx) => (
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                        <span>{item.name} ({item.brand} {item.model}) x {item.qty}</span>
+                        <span>
+                          {item.name} ({item.brand} {item.model}) x {item.qty}
+                          {(item.quotationUrl || item.quotationData) && (
+                            <a href={item.quotationUrl || item.quotationData} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', marginLeft: '10px', fontSize: '0.75rem' }}>[View Attachment]</a>
+                          )}
+                        </span>
                         <span>LKR {(item.qty * item.unitPrice).toLocaleString()}</span>
                       </div>
                     ))}

@@ -6,8 +6,9 @@ import BusinessDetailsForm from './BusinessDetailsForm';
 import TrainingForm from './TrainingForm';
 import ProductionForm from './ProductionForm';
 import EquipmentForm from './EquipmentForm';
-import { db, auth } from '../../firebase';
-import { collection, addDoc, serverTimestamp, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { db, auth, storage } from '../../firebase';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -147,38 +148,46 @@ function DOModule({ initialData, onComplete }) {
     }
 
     setIsSubmitting(true);
-    setSubmissionStatus('Checking session...');
+    setSubmissionStatus('Initializing...');
 
     try {
-      // 1. Convert Files to Base64 Strings internally
+      // 1. Prepare Document Reference to get ID early for storage path
+      const appRef = initialData ? doc(db, 'applications', initialData.id) : doc(collection(db, 'applications'));
+      const appId = appRef.id;
+
       setSubmissionStatus('Processing documents...');
-      const equipmentWithBase64 = [];
+      const updatedItems = [];
       const items = formData.equipment.items || [];
       
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (item.quotationFile instanceof File) {
-          // Check file size (Firestore limit is 1MB per document total)
-          if (item.quotationFile.size > 800000) { // ~800KB limit for safety
-            alert(`File "${item.quotationFile.name}" is too large. Please use a file smaller than 800KB.`);
+          // Check file size (Now we can support 2MB+ with Storage)
+          if (item.quotationFile.size > 5000000) { // 5MB limit
+            alert(`File "${item.quotationFile.name}" is too large. Please use a file smaller than 5MB.`);
             setIsSubmitting(false);
             return;
           }
 
-          setSubmissionStatus(`Converting document ${i + 1} of ${items.length}...`);
+          setSubmissionStatus(`Uploading document ${i + 1} of ${items.length}...`);
           try {
-            const base64String = await fileToBase64(item.quotationFile);
-            equipmentWithBase64.push({ 
+            const fileName = `${appId}_${Date.now()}_${item.name.replace(/\s+/g, '_')}`;
+            const storageRef = ref(storage, `quotations/${fileName}`);
+            const snapshot = await uploadBytes(storageRef, item.quotationFile);
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            
+            updatedItems.push({ 
               ...item, 
-              quotationData: base64String, // Store as Base64 string
-              quotationFile: null 
+              quotationUrl: downloadURL, // Store permanent URL
+              quotationFile: null,
+              quotationData: null // Clear old base64 if any
             });
           } catch (err) {
-            console.error("Base64 conversion error:", err);
-            equipmentWithBase64.push(item);
+            console.error("Storage upload error:", err);
+            updatedItems.push(item);
           }
         } else {
-          equipmentWithBase64.push(item);
+          updatedItems.push(item);
         }
       }
 
@@ -203,8 +212,8 @@ function DOModule({ initialData, onComplete }) {
         ...formData,
         equipment: {
           ...formData.equipment,
-          items: equipmentWithBase64.map(({ ...rest }) => rest),
-          totalGrant: Math.min((formData.equipment.items || []).reduce((sum, i) => sum + (Number(i.qty) * Number(i.unitPrice)), 0) * (policy.percentage / 100), policy.maxAmount)
+          items: updatedItems,
+          totalGrant: Math.min((updatedItems).reduce((sum, i) => sum + (Number(i.qty) * Number(i.unitPrice)), 0) * (policy.percentage / 100), policy.maxAmount)
         }
       }));
 
@@ -223,7 +232,7 @@ function DOModule({ initialData, onComplete }) {
 
       if (!initialData) {
         finalSubmission.createdAt = serverTimestamp();
-        await addDoc(collection(db, 'applications'), finalSubmission);
+        await setDoc(appRef, finalSubmission);
 
         // 4. Save new sector globally if applicable
         if (formData.business.isNewSector && formData.business.sector) {
