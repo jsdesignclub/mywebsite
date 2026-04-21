@@ -203,7 +203,7 @@ function DOModule({ initialData, onComplete }) {
         ...formData,
         equipment: {
           ...formData.equipment,
-          items: equipmentWithBase64.map(({ quotationData, ...rest }) => rest),
+          items: equipmentWithBase64.map(({ ...rest }) => rest),
           totalGrant: Math.min((formData.equipment.items || []).reduce((sum, i) => sum + (Number(i.qty) * Number(i.unitPrice)), 0) * (policy.percentage / 100), policy.maxAmount)
         }
       }));

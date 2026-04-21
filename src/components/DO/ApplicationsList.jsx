@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../../firebase';
 import { collection, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import { FileText, Clock, CheckCircle, AlertCircle, Eye, Search, Filter, Trash2, Edit3, X, Download, User as UserIcon, Briefcase, GraduationCap, Factory, PenTool, XCircle, Loader2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Eye, Search, Filter, Trash2, Edit3, X, Download, User as UserIcon, Briefcase, GraduationCap, Factory, PenTool, XCircle, Loader2, Image, Printer } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 
@@ -261,6 +261,25 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                   </div>
  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginLeft: 'auto' }}>
+                    {(app.equipment?.items || []).some(i => i.quotationData) && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const firstQuote = (app.equipment.items || []).find(i => i.quotationData);
+                          if (firstQuote) {
+                            const link = document.createElement('a');
+                            link.href = firstQuote.quotationData;
+                            link.download = `preview_${app.id.substring(0,8)}.png`;
+                            link.click();
+                          }
+                        }}
+                        style={{ ...iconBtnStyle, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}
+                        title="Quick Quotation Preview"
+                      >
+                         <Image size={18} />
+                      </button>
+                    )}
+
                     <button 
                       onClick={() => setSelectedApp(app)}
                       style={{ ...iconBtnStyle, color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}
