@@ -80,19 +80,6 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
           <input type="text" name="whatsapp" value={data.whatsapp || ''} onChange={handleChange} style={inputStyle} placeholder="+94 7X XXX XXXX" />
         </div>
 
-        <div className="form-group">
-          <label style={labelStyle}>Occupation</label>
-          <select name="occupation" value={data.occupation || ''} onChange={handleChange} style={inputStyle}>
-            <option value="">Select Occupation</option>
-            <option value="government">Government job</option>
-            <option value="semi_government">Semi government</option>
-            <option value="ngo">NGO</option>
-            <option value="private">Private</option>
-            <option value="self_employment">Self employment</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label style={labelStyle}>Permanent Address</label>
           <textarea name="address" value={data.address || ''} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} placeholder="No, Street, City" />
@@ -129,6 +116,19 @@ function PersonalDetailsForm({ data, onUpdate, onNext }) {
         <div className="form-group">
           <label style={labelStyle}>Number of Dependants</label>
           <input type="number" name="dependants" value={data.dependants || ''} onChange={handleChange} style={inputStyle} />
+        </div>
+
+        <div className="form-group">
+          <label style={labelStyle}>Occupation</label>
+          <select name="occupation" value={data.occupation || ''} onChange={handleChange} style={inputStyle}>
+            <option value="">Select Occupation</option>
+            <option value="government">Government job</option>
+            <option value="semi_government">Semi government</option>
+            <option value="ngo">NGO</option>
+            <option value="private">Private</option>
+            <option value="self_employment">Self employment</option>
+            <option value="other">Other</option>
+          </select>
         </div>
       </div>
 
