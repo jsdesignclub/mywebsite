@@ -34,6 +34,41 @@ function DOModule({ initialData, onComplete }) {
     history: {}
   });
 
+  // Auto-populate DS Division and District based on user's assigned division
+  React.useEffect(() => {
+    if (!initialData && userDivision && !formData.personal.dsDivision) {
+      const badullaDivs = [
+        'Badulla', 'Bandarawela', 'Ella', 'Haldummulla', 'Hali-Ela', 
+        'Haputale', 'Kandaketiya', 'Lunugala', 'Mahiyanganaya', 
+        'Meegahakivula', 'Passara', 'Rideemaliyadda', 'Soranathota', 
+        'Uva Paranagama', 'Welimada'
+      ];
+      const monaragalaDivs = [
+        'Badalkumbura', 'Bibile', 'Buttala', 'Kataragama', 'Madulla', 
+        'Medagama', 'Moneragala', 'Sevanagala', 'Siyambalanduwa', 
+        'Thanamalwila', 'Wellawaya'
+      ];
+      
+      let detectedDistrict = '';
+      if (badullaDivs.includes(userDivision)) {
+        detectedDistrict = 'Badulla';
+      } else if (monaragalaDivs.includes(userDivision)) {
+        detectedDistrict = 'Monaragala';
+      }
+
+      if (detectedDistrict) {
+        setFormData(prev => ({
+          ...prev,
+          personal: {
+            ...prev.personal,
+            dsDivision: userDivision,
+            district: detectedDistrict
+          }
+        }));
+      }
+    }
+  }, [userDivision, initialData]);
+
   const updateFormData = (step, data) => {
     setFormData(prev => ({
       ...prev,
