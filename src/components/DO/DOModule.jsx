@@ -169,26 +169,37 @@ function DOModule({ initialData, onComplete }) {
             return;
           }
 
-          setSubmissionStatus(`Uploading document ${i + 1} of ${items.length}...`);
+          setSubmissionStatus(`Connecting to Storage...`);
           
           try {
-            const fileName = `${appId}_${Date.now()}_${item.name.replace(/\s+/g, '_')}`;
+            const fileName = `${appId}_${Date.now()}_${item.name.replace(/[^a-z0-9]/gi, '_')}`;
             const storageRef = ref(storage, `quotations/${fileName}`);
             
             // Use a Promise to handle the resumable upload
             const downloadURL = await new Promise((resolve, reject) => {
               const uploadTask = uploadBytesResumable(storageRef, item.quotationFile);
               
+              // Diagnostic timeout: if no progress after 15s, it's likely a Permissions/Rules issue
+              const timeout = setTimeout(() => {
+                uploadTask.cancel();
+                reject(new Error("Upload timed out. This usually happens if 'Firebase Storage Rules' are not set to 'allow write'. Please check your Firebase Console."));
+              }, 15000);
+
               uploadTask.on('state_changed', 
                 (snapshot) => {
                   const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                   setSubmissionStatus(`Uploading ${item.name}: ${Math.round(progress)}%`);
+                  if (progress > 0) clearTimeout(timeout);
                 }, 
                 (error) => {
-                  console.error("Upload failed:", error);
-                  reject(error);
+                  clearTimeout(timeout);
+                  console.error("Firebase Storage Error:", error.code, error.message);
+                  let friendlyMsg = "Storage Upload Failed.";
+                  if (error.code === 'storage/unauthorized') friendlyMsg = "Permission Denied: Ensure Storage Rules are set to 'allow write'.";
+                  reject(new Error(friendlyMsg));
                 }, 
                 () => {
+                  clearTimeout(timeout);
                   getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
                 }
               );
@@ -202,7 +213,7 @@ function DOModule({ initialData, onComplete }) {
             });
           } catch (err) {
             console.error("Storage upload error:", err);
-            throw new Error(`Failed to upload quotation for ${item.name}. Please check your internet connection.`);
+            throw err; // Propagate the descriptive error
           }
         } else {
           // If it's not a new file, ensure quotationFile is null to avoid Firestore errors
