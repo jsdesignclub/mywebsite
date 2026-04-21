@@ -77,12 +77,36 @@ function DOModule({ initialData, onComplete }) {
     }));
   };
 
-  const fileToBase64 = (file) => {
+  const compressAndEncode = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_WIDTH = 1000;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((MAX_WIDTH / width) * height);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to JPEG (much smaller than PNG/Original)
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          resolve(dataUrl);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
     });
   };
 
@@ -151,94 +175,41 @@ function DOModule({ initialData, onComplete }) {
     setSubmissionStatus('Initializing...');
 
     try {
-      // 1. Prepare Document Reference to get ID early for storage path
-      const appRef = initialData ? doc(db, 'applications', initialData.id) : doc(collection(db, 'applications'));
-      const appId = appRef.id;
-
-      setSubmissionStatus('Processing documents...');
+      setSubmissionStatus('Optimizing images...');
       const updatedItems = [];
       const items = formData.equipment.items || [];
       
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (item.quotationFile instanceof File) {
-          // Check file size (Now we can support 2MB+ with Storage)
-          if (item.quotationFile.size > 5000000) { // 5MB limit
-            alert(`File "${item.quotationFile.name}" is too large. Please use a file smaller than 5MB.`);
-            setIsSubmitting(false);
-            return;
-          }
-
-          setSubmissionStatus(`Connecting to Storage...`);
-          
+          setSubmissionStatus(`Processing ${item.name}...`);
           try {
-            const fileName = `${appId}_${Date.now()}_${item.name.replace(/[^a-z0-9]/gi, '_')}`;
-            const storageRef = ref(storage, `quotations/${fileName}`);
-            
-            // Use a Promise to handle the resumable upload
-            const downloadURL = await new Promise((resolve, reject) => {
-              const uploadTask = uploadBytesResumable(storageRef, item.quotationFile);
-              
-              // Diagnostic timeout: if no progress after 15s, it's likely a Permissions/Rules issue
-              const timeout = setTimeout(() => {
-                uploadTask.cancel();
-                reject(new Error("Upload timed out. This usually happens if 'Firebase Storage Rules' are not set to 'allow write'. Please check your Firebase Console."));
-              }, 15000);
-
-              uploadTask.on('state_changed', 
-                (snapshot) => {
-                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                  setSubmissionStatus(`Uploading ${item.name}: ${Math.round(progress)}%`);
-                  if (progress > 0) clearTimeout(timeout);
-                }, 
-                (error) => {
-                  clearTimeout(timeout);
-                  console.error("Firebase Storage Error:", error.code, error.message);
-                  let friendlyMsg = "Storage Upload Failed.";
-                  if (error.code === 'storage/unauthorized') friendlyMsg = "Permission Denied: Ensure Storage Rules are set to 'allow write'.";
-                  reject(new Error(friendlyMsg));
-                }, 
-                () => {
-                  clearTimeout(timeout);
-                  getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject);
-                }
-              );
-            });
-            
+            const compressedBase64 = await compressAndEncode(item.quotationFile);
             updatedItems.push({ 
               ...item, 
-              quotationUrl: downloadURL,
-              quotationFile: null,
-              quotationData: null
+              quotationData: compressedBase64,
+              quotationUrl: null,
+              quotationFile: null
             });
           } catch (err) {
-            console.error("Storage upload error:", err);
-            throw err; // Propagate the descriptive error
+            console.error("Compression error:", err);
+            throw new Error(`Failed to process ${item.name}.`);
           }
         } else {
-          // If it's not a new file, ensure quotationFile is null to avoid Firestore errors
-          const { quotationFile, ...rest } = item;
-          updatedItems.push({ ...rest, quotationFile: null });
+          updatedItems.push({ ...item, quotationFile: null });
         }
       }
 
-      // 2. Sanitize and Prepare Final Data
-      setSubmissionStatus('Calculating eligibility score...');
+      setSubmissionStatus('Calculating score...');
       const applicationScore = await calculateScore(formData);
       
-      // Fetch dynamic grant policy
-      setSubmissionStatus('Retrieving grant policy...');
       let policy = { percentage: 50, maxAmount: 100000 };
       try {
         const policySnap = await getDoc(doc(db, 'settings', 'grant_policy'));
-        if (policySnap.exists()) {
-          policy = policySnap.data();
-        }
-      } catch (err) {
-        console.warn("Using default policy due to fetch error:", err);
-      }
+        if (policySnap.exists()) policy = policySnap.data();
+      } catch (err) {}
 
-      setSubmissionStatus('Saving to Database...');
+      setSubmissionStatus('Finalizing...');
       const sanitizedData = JSON.parse(JSON.stringify({
         ...formData,
         equipment: {
@@ -258,33 +229,28 @@ function DOModule({ initialData, onComplete }) {
           email: auth.currentUser.email
         },
         dsReview: null,
-        lastUpdated: serverTimestamp()
+        lastUpdated: serverTimestamp(),
+        createdAt: initialData ? (initialData.createdAt || serverTimestamp()) : serverTimestamp()
       };
 
       if (!initialData) {
-        finalSubmission.createdAt = serverTimestamp();
-        await setDoc(appRef, finalSubmission);
-
-        // 4. Save new sector globally if applicable
-        if (formData.business.isNewSector && formData.business.sector) {
-          try {
-            await addDoc(collection(db, 'settings_sectors'), {
-              name: formData.business.sector,
-              addedBy: auth.currentUser.email,
-              createdAt: serverTimestamp()
-            });
-          } catch (sectorErr) {
-            console.warn("Could not save new sector globally:", sectorErr);
-          }
-        }
-
-        alert('Application submitted successfully!');
+        await addDoc(collection(db, 'applications'), finalSubmission);
       } else {
         await updateDoc(doc(db, 'applications', initialData.id), finalSubmission);
-        alert('Application updated successfully!');
-        if (onComplete) onComplete();
+      }
+
+      // Add to global sectors if new
+      if (formData.business.isNewSector && formData.business.sector) {
+        try {
+          await addDoc(collection(db, 'settings_sectors'), {
+            name: formData.business.sector,
+            addedBy: auth.currentUser.email,
+            createdAt: serverTimestamp()
+          });
+        } catch (e) {}
       }
       
+      alert('Application submitted successfully!');
       window.location.reload(); 
     } catch (error) {
       console.error("Detailed Submission Error:", error);
