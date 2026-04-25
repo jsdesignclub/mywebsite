@@ -6,7 +6,7 @@ import { UserPlus, Shield, MapPin, Search, Trash2, Mail, X, CheckCircle, Setting
 import { motion, AnimatePresence } from 'framer-motion';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter, List } from 'lucide-react';
 
 const thStyle = { padding: '1.2rem 1.5rem', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' };
 const tdStyle = { padding: '1.2rem 1.5rem' };
@@ -49,6 +49,7 @@ function AdminModule({ activeTab: externalTab }) {
   ];
 
   const [approvedApps, setApprovedApps] = useState([]);
+  const [allApps, setAllApps] = useState([]);
   const [appsLoading, setAppsLoading] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   
@@ -63,6 +64,7 @@ function AdminModule({ activeTab: externalTab }) {
     fetchDivisions();
     fetchScoringPolicy();
     fetchApprovedApps();
+    fetchAllApps();
   }, []);
 
   const exportCSV = () => {
@@ -214,6 +216,54 @@ function AdminModule({ activeTab: externalTab }) {
       setApprovedApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) { console.error(err); }
     finally { setAppsLoading(false); }
+  };
+
+  const fetchAllApps = async () => {
+    try {
+      const q = query(collection(db, 'applications'));
+      const snap = await getDocs(q);
+      setAllApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) { console.error(err); }
+  };
+
+  const getScoreBreakdown = (app, policy) => {
+    let breakdown = { occupation: 0, education: 0, businessRegistration: 0, tradeLicense: 0, employees: 0, experience: 0, profit: 0, total: 0 };
+    if (!app || !policy) return breakdown;
+    
+    // 1. Occupation Points
+    const occ = app.personal?.occupation;
+    if (occ) breakdown.occupation += (policy.occupationWeights[occ] || 0);
+
+    // 2. Business Setup
+    if (app.business?.businessName) breakdown.businessRegistration += policy.businessWeights.namePoints;
+    if (app.business?.licenseNo) breakdown.tradeLicense += policy.businessWeights.licensePoints;
+    const employees = Number(app.business?.employeeCount || 0);
+    breakdown.employees += (employees * policy.businessWeights.pointsPerEmployee);
+
+    // 3. Education & NVQ
+    if (app.training?.nvqLevel && app.training.nvqLevel !== 'none') {
+      breakdown.education += (Number(app.training.nvqLevel) * policy.eduWeights.nvqPerLevel);
+    }
+    const deg = app.training?.degree;
+    if (deg && policy.eduWeights[deg]) breakdown.education += policy.eduWeights[deg];
+
+    // 4. Experience
+    const exp = Number(app.training?.experienceYears || 0);
+    breakdown.experience += (exp * policy.expWeights.pointsPerYear);
+
+    // 5. Monthly Profit
+    const income = Number(app.production?.estimatedIncome || 0);
+    const cost = Number(app.production?.productionCost || 0);
+    const profit = income - cost;
+
+    if (profit > 100000) breakdown.profit += policy.profitWeights.bracket5;
+    else if (profit >= 75000) breakdown.profit += policy.profitWeights.bracket4;
+    else if (profit >= 50000) breakdown.profit += policy.profitWeights.bracket3;
+    else if (profit >= 25000) breakdown.profit += policy.profitWeights.bracket2;
+    else if (profit > 0) breakdown.profit += policy.profitWeights.bracket1;
+
+    breakdown.total = breakdown.occupation + breakdown.education + breakdown.businessRegistration + breakdown.tradeLicense + breakdown.employees + breakdown.experience + breakdown.profit;
+    return breakdown;
   };
 
   const fetchScoringPolicy = async () => {
@@ -799,6 +849,89 @@ function AdminModule({ activeTab: externalTab }) {
                 {scoringLoading ? 'Applying Changes...' : 'Save Scoring Statistics'}
               </button>
            </div>
+        </div>
+      )}
+
+      {activeSubTab === 'scoring-board' && (
+        <div className="animate-fade-in glass" style={{ padding: '3rem', overflowX: 'auto' }}>
+           <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <List size={20} color="#3b82f6" /> Master Score Board
+           </h3>
+           <p style={{ color: '#94a3b8', marginBottom: '2rem' }}>Detailed breakdown of scores for every application.</p>
+           
+           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <th style={thStyle}>No</th>
+                  <th style={thStyle}>ID No</th>
+                  <th style={thStyle}>Full Name</th>
+                  <th style={thStyle}>Business Name</th>
+                  <th style={thStyle}>Occupation (Max 5)</th>
+                  <th style={thStyle}>Education (Max ~20)</th>
+                  <th style={thStyle}>Bus. Reg (10)</th>
+                  <th style={thStyle}>Trade License (5)</th>
+                  <th style={thStyle}>Employees</th>
+                  <th style={thStyle}>Experience</th>
+                  <th style={thStyle}>Profit Margin (Max 5)</th>
+                  <th style={thStyle}>Total Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allApps.map((app, idx) => {
+                  const breakdown = getScoreBreakdown(app, scoringPolicy);
+                  return (
+                    <tr key={app.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="row-hover">
+                      <td style={tdStyle}>{idx + 1}</td>
+                      <td style={tdStyle}><code style={{ fontSize: '0.75rem', color: '#3b82f6' }}>{app.id.substring(0, 8)}</code></td>
+                      <td style={tdStyle}>{app.personal?.fullName || 'N/A'}</td>
+                      <td style={tdStyle}>{app.business?.businessName || 'N/A'}</td>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600 }}>{breakdown.occupation}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>({app.personal?.occupation || 'None'})</span>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600 }}>{breakdown.education}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                            ({app.training?.nvqLevel !== 'none' ? `NVQ ${app.training?.nvqLevel}` : ''} {app.training?.degree ? app.training.degree : ''})
+                          </span>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 600 }}>{breakdown.businessRegistration}</span>
+                         </div>
+                      </td>
+                      <td style={tdStyle}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 600 }}>{breakdown.tradeLicense}</span>
+                         </div>
+                      </td>
+                      <td style={tdStyle}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 600 }}>{breakdown.employees}</span>
+                         </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontWeight: 600 }}>{breakdown.experience}</span>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>({app.training?.experienceYears || 0} yrs)</span>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>{breakdown.profit}</td>
+                      <td style={tdStyle}><span style={{ fontWeight: 800, color: '#10b981', fontSize: '1.2rem' }}>{breakdown.total}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+           </table>
+           {allApps.length === 0 && (
+              <div style={{ padding: '6rem 2rem', textAlign: 'center', color: '#64748b' }}>
+                No applications found.
+              </div>
+           )}
         </div>
       )}
 
