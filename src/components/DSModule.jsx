@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../firebase';
-import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { FileText, CheckCircle, XCircle, Eye, Search, AlertCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -50,9 +50,19 @@ function DSModule() {
     if (newStatus === 'rejected' && reason === null) return;
 
     try {
+      let nextStatus = newStatus === 'approved' ? 'pending_director' : newStatus;
+      if (newStatus === 'approved') {
+        try {
+          const flowSnap = await getDoc(doc(db, 'settings', 'approval_flow'));
+          if (flowSnap.exists() && flowSnap.data().skipDirectorReview) {
+            nextStatus = 'approved_by_director';
+          }
+        } catch (err) {}
+      }
+
       const appRef = doc(db, 'applications', appId);
       await updateDoc(appRef, {
-        status: newStatus === 'approved' ? 'pending_director' : newStatus,
+        status: nextStatus,
         dsReview: {
           reviewedBy: auth.currentUser.email,
           reviewedAt: serverTimestamp(),
@@ -61,7 +71,7 @@ function DSModule() {
         lastUpdated: serverTimestamp()
       });
 
-      alert(`Application ${newStatus === 'approved' ? 'Forwarded to Director' : 'Rejected'} successfully!`);
+      alert(`Application ${newStatus === 'approved' ? (nextStatus === 'approved_by_director' ? 'Forwarded to Admin' : 'Forwarded to Director') : 'Rejected'} successfully!`);
       setSelectedApp(null);
       fetchPendingApplications();
     } catch (error) {
@@ -193,7 +203,31 @@ function DSModule() {
                          <span style={{ fontSize: '0.9rem' }}>Eligibility Score:</span>
                          <span style={{ fontWeight: 800, color: '#3b82f6' }}>{selectedApp.score || 0} Points</span>
                        </div>
-                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       {selectedApp.scoreBreakdown && (
+                         <div style={{ margin: '0.6rem 0', padding: '0.6rem 0', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', color: '#94a3b8' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span>Business Stability:</span>
+                             <strong>{selectedApp.scoreBreakdown.businessStability || 0} / 25</strong>
+                           </div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span>Competency:</span>
+                             <strong>{selectedApp.scoreBreakdown.professionalCompetency || 0} / 25</strong>
+                           </div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span>Household Status:</span>
+                             <strong>{selectedApp.scoreBreakdown.householdStatus || 0} / 15</strong>
+                           </div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span>Contribution:</span>
+                             <strong>{selectedApp.scoreBreakdown.economicContribution || 0} / 25</strong>
+                           </div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                             <span>Awards:</span>
+                             <strong>{selectedApp.scoreBreakdown.specialAwards || 0} / 10</strong>
+                           </div>
+                         </div>
+                       )}
+                       <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: selectedApp.scoreBreakdown ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: selectedApp.scoreBreakdown ? '0.6rem' : 0 }}>
                          <span style={{ fontSize: '0.9rem' }}>Grant Amount:</span>
                          <span style={{ fontWeight: 800, color: '#10b981' }}>LKR {(selectedApp.equipment?.totalGrant || 0).toLocaleString()}</span>
                        </div>
@@ -223,7 +257,7 @@ function DSModule() {
                     onClick={() => handleAction(selectedApp.id, 'approved')}
                     style={{ flexGrow: 2, padding: '1.2rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '1rem', minWidth: '220px' }}
                   >
-                    FORWARD TO DIRECTOR
+                    APPROVE & FORWARD
                   </button>
                   <button 
                     onClick={() => handleAction(selectedApp.id, 'rejected')}

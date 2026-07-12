@@ -34,7 +34,7 @@ function Dashboard() {
     if (normalizedRole === 'accountant' && (activeTab === 'overview' || activeTab === 'procurement')) {
       return <AccountantModule statusFilter="approved" />;
     }
-    if (normalizedRole === 'admin' && (['overview', 'users', 'records', 'sectors', 'policy', 'scoring', 'scoring-board'].includes(activeTab))) {
+    if (normalizedRole === 'admin' && (['overview', 'users', 'records', 'sectors', 'policy', 'scoring', 'scoring-board', 'dispatch', 'approval-flow'].includes(activeTab))) {
       return <AdminModule activeTab={activeTab} />;
     }
 
@@ -53,6 +53,8 @@ function Dashboard() {
       case 'policy':
       case 'scoring':
       case 'scoring-board':
+      case 'approval-flow':
+      case 'dispatch':
         return <AdminModule activeTab={activeTab} />;
       case 'new-app':
         return <DOModule initialData={editingApp} onComplete={() => setEditingApp(null)} />;

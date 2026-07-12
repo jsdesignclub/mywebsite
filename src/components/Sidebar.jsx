@@ -56,7 +56,9 @@ function Sidebar({ activeTab, setActiveTab, onLogout, isOpen, onClose, userRole 
       { id: 'sectors', title: 'Divisional Sectors', icon: <List size={16} /> },
       { id: 'policy', title: 'Grant Policy', icon: <Shield size={16} /> },
       { id: 'scoring', title: 'Scoring Engine', icon: <Settings size={16} /> },
-      { id: 'scoring-board', title: 'Master Score board', icon: <List size={16} /> }
+      { id: 'scoring-board', title: 'Master Score board', icon: <List size={16} /> },
+      { id: 'approval-flow', title: 'Approval Flow', icon: <Settings size={16} /> },
+      { id: 'dispatch', title: 'Dispatch Control', icon: <CheckCircle size={16} /> }
     ]},
     { id: 'settings', title: 'Settings', icon: <Settings size={20} /> }
   ] : [

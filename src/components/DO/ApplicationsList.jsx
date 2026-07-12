@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../../firebase';
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp, deleteDoc, getDoc } from 'firebase/firestore';
 import { FileText, Clock, CheckCircle, AlertCircle, Eye, Search, Filter, Trash2, Edit3, X, Download, User as UserIcon, Briefcase, GraduationCap, Factory, PenTool, XCircle, Loader2, Image, Printer } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
+import { generateApplicationPDF } from '../../utils/generateApplicationPDF';
+import { generateSinhalaApplicationPDF } from '../../utils/generateSinhalaApplicationPDF';
 
 function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
   const { userRole, userDivision } = useAuth();
@@ -71,11 +73,23 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
     const reason = newStatus === 'rejected' ? window.prompt('Enter reason for rejection:') : null;
     if (newStatus === 'rejected' && reason === null) return;
     
-    // Use the core update logic
     try {
+      let finalStatus = newStatus;
+      if (newStatus === 'approved' && normalizedRole === 'divisional_secretary') {
+        finalStatus = 'pending_director';
+        try {
+          const flowSnap = await getDoc(doc(db, 'settings', 'approval_flow'));
+          if (flowSnap.exists() && flowSnap.data().skipDirectorReview) {
+            finalStatus = 'approved_by_director';
+          }
+        } catch (err) {}
+      } else if (newStatus === 'approved' && normalizedRole === 'director') {
+        finalStatus = 'approved_by_director';
+      }
+
       const appRef = doc(db, 'applications', appId);
       const updateData = {
-        status: newStatus === 'approved' && userRole === 'divisional_secretary' ? 'pending_director' : newStatus,
+        status: finalStatus,
         lastUpdated: serverTimestamp()
       };
 
@@ -94,8 +108,16 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
       }
 
       await updateDoc(appRef, updateData);
-      setApplications(prev => prev.map(app => app.id === appId ? { ...app, status: updateData.status } : app));
-      alert(`Application ${updateData.status === 'pending_director' ? 'Forwarded to Director' : (newStatus === 'approved' ? 'Approved' : 'Rejected')}!`);
+      setApplications(prev => prev.map(app => app.id === appId ? { ...app, status: finalStatus } : app));
+      let msg = 'Rejected!';
+      if (newStatus === 'approved') {
+        if (finalStatus === 'approved_by_director') {
+          msg = normalizedRole === 'divisional_secretary' ? 'Forwarded to Admin!' : 'Approved!';
+        } else if (finalStatus === 'pending_director') {
+          msg = 'Forwarded to Director!';
+        }
+      }
+      alert(`Application ${msg}`);
     } catch (err) {
       alert('Action failed: ' + err.message);
     }
@@ -292,10 +314,11 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                     {normalizedRole === 'development_officer' && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); onEdit(app); }}
-                        style={{ ...iconBtnStyle, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' }}
-                        title="Edit"
+                        style={{ ...iconBtnStyle, color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)', padding: '0.6rem 1rem', gap: '0.4rem' }}
+                        title="Edit Application"
                       >
                         <Edit3 size={18} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Edit</span>
                       </button>
                     )}
  
@@ -346,10 +369,7 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
  
       {/* Detail Modal */}
       {selectedApp && (
-        <div style={{
-          ...modalOverlayStyle,
-          padding: window.innerWidth < 768 ? '1rem' : '2rem'
-        }} onClick={() => setSelectedApp(null)}>
+        <div style={modalOverlayStyle} onClick={() => setSelectedApp(null)}>
           <div className="glass animate-fade-in" style={{
             ...modalContentStyle,
             padding: window.innerWidth < 768 ? '1.5rem' : '3rem',
@@ -360,22 +380,64 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                 <h2 style={{ margin: 0, fontSize: 'clamp(1.2rem, 4vw, 1.6rem)' }}>Application Dossier</h2>
                 <p style={{ margin: '0.3rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>Ref ID: {selectedApp.id.substring(0, 8).toUpperCase()}</p>
               </div>
-              <button 
-                onClick={() => setSelectedApp(null)} 
-                style={{ 
-                  background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.1)', 
-                  color: '#94a3b8', 
-                  cursor: 'pointer',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                <X size={20} />
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button 
+                  onClick={() => generateApplicationPDF(selectedApp)}
+                  style={{ 
+                    background: 'rgba(59, 130, 246, 0.1)', 
+                    border: '1px solid rgba(59, 130, 246, 0.3)', 
+                    color: '#3b82f6', 
+                    cursor: 'pointer',
+                    padding: '0 0.8rem',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    height: '40px'
+                  }}
+                  title="Download English PDF"
+                >
+                  <Download size={16} /> English
+                </button>
+                <button 
+                  onClick={() => generateSinhalaApplicationPDF(selectedApp)}
+                  style={{ 
+                    background: 'rgba(16, 185, 129, 0.1)', 
+                    border: '1px solid rgba(16, 185, 129, 0.3)', 
+                    color: '#10b981', 
+                    cursor: 'pointer',
+                    padding: '0 0.8rem',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    height: '40px'
+                  }}
+                  title="සිංහල PDF බාගන්න"
+                >
+                  <Download size={16} /> සිංහල
+                </button>
+                <button 
+                  onClick={() => setSelectedApp(null)} 
+                  style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    color: '#94a3b8', 
+                    cursor: 'pointer',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                  <X size={20} />
+                </button>
+              </div>
             </div>
  
             <div className="grid-2">
@@ -401,6 +463,27 @@ function ApplicationsList({ statusFilter = 'all', onEdit, isCompact = false }) {
                   <p><strong>NVQ Professional Level:</strong> {selectedApp.training?.nvqLevel || 'N/A'}</p>
                   <p><strong>Educational Degree:</strong> {selectedApp.training?.degree || 'N/A'}</p>
                   <p><strong>System Score:</strong> <span style={{ color: '#10b981', fontWeight: 800 }}>{selectedApp.score || 0} Points</span></p>
+                  {selectedApp.scoreBreakdown && (
+                    <div style={{ marginTop: '0.8rem', padding: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem', color: '#94a3b8' }}>
+                      <p style={{ margin: '0 0 0.4rem 0', fontWeight: 600, color: '#3b82f6' }}>Score Breakdown:</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.3rem' }}>
+                        <span>Business Stability & Growth:</span>
+                        <strong>{selectedApp.scoreBreakdown.businessStability || 0} / 25</strong>
+                        
+                        <span>Professional Competency:</span>
+                        <strong>{selectedApp.scoreBreakdown.professionalCompetency || 0} / 25</strong>
+                        
+                        <span>Household Status & Social:</span>
+                        <strong>{selectedApp.scoreBreakdown.householdStatus || 0} / 15</strong>
+                        
+                        <span>Economic Contribution:</span>
+                        <strong>{selectedApp.scoreBreakdown.economicContribution || 0} / 25</strong>
+                        
+                        <span>Special Awards & Recognition:</span>
+                        <strong>{selectedApp.scoreBreakdown.specialAwards || 0} / 10</strong>
+                      </div>
+                    </div>
+                  )}
                 </DetailSection>
  
                 <DetailSection icon={<PenTool size={18}/>} title="Equipment Breakdown">
@@ -504,17 +587,20 @@ const modalOverlayStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 1000
+  zIndex: 1000,
+  padding: '1rem',
+  boxSizing: 'border-box'
 };
 
 const modalContentStyle = {
   width: '100%',
   maxWidth: '960px',
-  maxHeight: '92vh',
+  maxHeight: 'calc(100vh - 2rem)',
   overflowY: 'auto',
   background: '#0c111d',
   border: '1px solid rgba(255,255,255,0.08)',
-  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+  margin: 'auto'
 };
 
 const cardStyle = {

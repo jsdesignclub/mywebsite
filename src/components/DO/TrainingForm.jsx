@@ -16,56 +16,13 @@ function TrainingForm({ data, onUpdate, onPrev, onNext }) {
       <div className="grid-2" style={{
         marginTop: '1.5rem'
       }}>
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label style={labelStyle}>NVQ Level (if applicable)</label>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-            {[1, 2, 3, 4, 5, 6, 7].map(level => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => onUpdate({ ...data, nvqLevel: level })}
-                style={{
-                  padding: '0.8rem',
-                  borderRadius: '10px',
-                  background: data.nvqLevel === level ? 'rgba(31, 78, 121, 0.4)' : 'rgba(255,255,255,0.03)',
-                  border: data.nvqLevel === level ? '2px solid #2e75b6' : '1px solid rgba(255,255,255,0.1)',
-                  color: data.nvqLevel === level ? '#fff' : '#94a3b8',
-                  minWidth: '50px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.85rem'
-                }}
-              >
-                L{level}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => onUpdate({ ...data, nvqLevel: 'none' })}
-              style={{
-                padding: '0.8rem 1rem',
-                borderRadius: '10px',
-                background: data.nvqLevel === 'none' ? 'rgba(244, 63, 94, 0.1)' : 'rgba(255,255,255,0.03)',
-                border: data.nvqLevel === 'none' ? '2px solid #f43f5e' : '1px solid rgba(255,255,255,0.1)',
-                color: data.nvqLevel === 'none' ? '#f43f5e' : '#475569',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '0.85rem'
-              }}
-            >
-              None
-            </button>
-          </div>
-        </div>
-
         <div className="form-group">
-          <label style={labelStyle}>Highest Degree</label>
-          <select name="degree" value={data.degree || ''} onChange={handleChange} style={inputStyle}>
-            <option value="">Select Degree</option>
-            <option value="none">None</option>
-            <option value="diploma">Diploma</option>
-            <option value="bachelor">Bachelor's Degree</option>
-            <option value="masters">Master's or Higher</option>
+          <label style={labelStyle}>Highest Qualification</label>
+          <select name="qualification" value={data.qualification || ''} onChange={handleChange} style={inputStyle}>
+            <option value="">Select Qualification</option>
+            <option value="nvq3">NVQ Level 3</option>
+            <option value="nvq4">NVQ Level 4</option>
+            <option value="degree">Degree</option>
           </select>
         </div>
 
@@ -75,14 +32,39 @@ function TrainingForm({ data, onUpdate, onPrev, onNext }) {
         </div>
 
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label style={labelStyle}>Other Related Training Programs</label>
-          <textarea 
-            name="otherTraining" 
-            value={data.otherTraining || ''} 
-            onChange={handleChange} 
-            style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} 
-            placeholder="Workshops, short courses, or vocational training..." 
-          />
+          <label style={labelStyle}>Special Awards & Recognition (Select all that apply)</label>
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input 
+                type="checkbox" 
+                name="awardRegional" 
+                checked={!!data.awardRegional} 
+                onChange={(e) => onUpdate({ ...data, awardRegional: e.target.checked })} 
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              Regional Level (2 Marks)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input 
+                type="checkbox" 
+                name="awardDistrict" 
+                checked={!!data.awardDistrict} 
+                onChange={(e) => onUpdate({ ...data, awardDistrict: e.target.checked })} 
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              District / Provincial Level (3 Marks)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input 
+                type="checkbox" 
+                name="awardNational" 
+                checked={!!data.awardNational} 
+                onChange={(e) => onUpdate({ ...data, awardNational: e.target.checked })} 
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              National Level (5 Marks)
+            </label>
+          </div>
         </div>
       </div>
 

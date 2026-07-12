@@ -19,11 +19,6 @@ function ProductionForm({ data, onUpdate, onPrev, onNext }) {
           <input type="text" name="products" value={data.products || ''} onChange={handleChange} style={inputStyle} placeholder="eg: Bed frames, Office desks, Kitchen cabinets" />
         </div>
 
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label style={labelStyle}>Required Raw Materials</label>
-          <textarea name="rawMaterials" value={data.rawMaterials || ''} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px' }} placeholder="Timber, Glue, Sandpaper, Vernish etc." />
-        </div>
-
         <div className="form-group">
           <label style={labelStyle}>Monthly Production Capacity</label>
           <input type="text" name="capacity" value={data.capacity || ''} onChange={handleChange} style={inputStyle} placeholder="eg: 50 units / month" />
@@ -42,6 +37,19 @@ function ProductionForm({ data, onUpdate, onPrev, onNext }) {
         <div className="form-group">
           <label style={labelStyle}>Total Current Asset Value (LKR)</label>
           <input type="number" name="assetValue" value={data.assetValue || ''} onChange={handleChange} style={inputStyle} placeholder="1,200,000" />
+        </div>
+
+        <div className="form-group">
+          <label style={labelStyle}>Quality Certifications / Value Addition</label>
+          <select name="hasQualityCert" value={data.hasQualityCert || 'no'} onChange={handleChange} style={inputStyle}>
+            <option value="no">No Specific Certifications</option>
+            <option value="yes">Yes (SLS, ISO, Organic, Premium Value Addition)</option>
+          </select>
+        </div>
+
+        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+          <label style={labelStyle}>Steps Taken for Quality Improvement / Value Addition</label>
+          <textarea name="qualitySteps" value={data.qualitySteps || ''} onChange={handleChange} style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} placeholder="Describe steps taken to improve product quality or add value..." />
         </div>
 
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>

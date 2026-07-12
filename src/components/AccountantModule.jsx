@@ -51,10 +51,16 @@ function AccountantModule({ statusFilter = 'approved' }) {
       );
 
       const querySnapshot = await getDocs(q);
-      const docs = querySnapshot.docs.map(doc => ({
+      let docs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+      // If we are looking for 'approved' apps, only show those dispatched by Admin
+      if (statusFilter === 'approved') {
+        docs = docs.filter(app => app.adminDispatch);
+      }
+
       setApplications(docs);
     } catch (error) {
       console.error("Error fetching accountant apps:", error);
@@ -263,6 +269,7 @@ function AccountantModule({ statusFilter = 'approved' }) {
               <th style={thStyle}>Equipment</th>
               <th style={thStyle}>Model</th>
               <th style={thStyle}>Brand</th>
+              <th style={thStyle}>Score</th>
               <th style={thStyle}>Total Cost</th>
               <th style={thStyle}>Grant</th>
               <th style={thStyle}>Quotation</th>
@@ -282,6 +289,7 @@ function AccountantModule({ statusFilter = 'approved' }) {
                   <td style={tdStyle}>{item.name || 'N/A'}</td>
                   <td style={tdStyle}>{item.model || '-'}</td>
                   <td style={tdStyle}>{item.brand || '-'}</td>
+                  <td style={tdStyle}><div style={{ color: '#10b981', fontWeight: 800 }}>{app.score || 0}</div></td>
                   <td style={tdStyle}>LKR {(app.equipment?.totalGrant * 2 || 0).toLocaleString()}</td>
                   <td style={tdStyle}><div style={{ color: '#10b981', fontWeight: 700 }}>LKR {(app.equipment?.totalGrant || 0).toLocaleString()}</div></td>
                   <td style={tdStyle}>

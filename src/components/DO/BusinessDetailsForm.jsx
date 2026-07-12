@@ -74,8 +74,21 @@ function BusinessDetailsForm({ data, onUpdate, onPrev, onNext }) {
         </div>
 
         <div className="form-group">
-          <label style={labelStyle}>Current Employee Count</label>
+          <label style={labelStyle}>Current Employee Count (without owner)</label>
           <input type="number" name="employeeCount" value={data.employeeCount || ''} onChange={handleChange} style={inputStyle} min="0" />
+        </div>
+
+        <div className="form-group">
+          <label style={labelStyle}>Financial Discipline / Bookkeeping</label>
+          <select name="hasBookkeeping" value={data.hasBookkeeping || 'no'} onChange={handleChange} style={inputStyle}>
+            <option value="no">No / Poor Records</option>
+            <option value="yes">Yes (Journals/Ledgers/Digital POS)</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label style={labelStyle}>Average Monthly Income (LKR)</label>
+          <input type="number" name="avgMonthlyIncome" value={data.avgMonthlyIncome || ''} onChange={handleChange} style={inputStyle} placeholder="50,000" min="0" />
         </div>
 
         <div className="form-group">

@@ -5,4 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/mywebsite/', // Repository name for GitHub Pages
+  server: {
+    watch: {
+      // Ignore the documents folder to avoid EBUSY locked-file watch errors
+      ignored: ['**/documents/**']
+    }
+  }
 })

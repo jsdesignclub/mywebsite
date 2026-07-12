@@ -42,8 +42,9 @@ function DirectorModule() {
 
     try {
       const appRef = doc(db, 'applications', appId);
+      const finalStatus = newStatus === 'approved' ? 'approved_by_director' : newStatus;
       await updateDoc(appRef, {
-        status: newStatus,
+        status: finalStatus,
         directorReview: {
           reviewedBy: auth.currentUser.email,
           reviewedAt: serverTimestamp(),
@@ -52,7 +53,7 @@ function DirectorModule() {
         lastUpdated: serverTimestamp()
       });
 
-      alert(`Application ${newStatus === 'approved' ? 'Officially Approved' : 'Rejected'}!`);
+      alert(`Application ${newStatus === 'approved' ? 'sent to Admin for final dispatch' : 'Rejected'}!`);
       setSelectedApp(null);
       fetchDirectorQueue();
     } catch (error) {
@@ -209,12 +210,24 @@ function DirectorModule() {
                   <div>
                     <Section title="Detailed Score Breakdown">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px' }}>
-                        <ScoreRow label="Education & NVQ" value={selectedApp.score > 20 ? 25 : 15} />
-                        <ScoreRow label="Business Viability" value={15} />
-                        <ScoreRow label="Asset Commitment" value={10} />
+                        {selectedApp.scoreBreakdown ? (
+                          <>
+                            <ScoreRow label="Business Stability & Growth" value={selectedApp.scoreBreakdown.businessStability || 0} max={25} />
+                            <ScoreRow label="Professional Competency" value={selectedApp.scoreBreakdown.professionalCompetency || 0} max={25} />
+                            <ScoreRow label="Household & Social Status" value={selectedApp.scoreBreakdown.householdStatus || 0} max={15} />
+                            <ScoreRow label="Economic Contribution" value={selectedApp.scoreBreakdown.economicContribution || 0} max={25} />
+                            <ScoreRow label="Special Awards & Recognition" value={selectedApp.scoreBreakdown.specialAwards || 0} max={10} />
+                          </>
+                        ) : (
+                          <>
+                            <ScoreRow label="Education & NVQ" value={selectedApp.score > 20 ? 25 : 15} />
+                            <ScoreRow label="Business Viability" value={15} />
+                            <ScoreRow label="Asset Commitment" value={10} />
+                          </>
+                        )}
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.8rem', display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
                           <span>FINAL ELIGIBILITY:</span>
-                          <span style={{ color: '#10b981' }}>{selectedApp.score} Points</span>
+                          <span style={{ color: '#10b981' }}>{selectedApp.score || 0} Points</span>
                         </div>
                       </div>
                     </Section>
@@ -277,11 +290,11 @@ function Section({ title, children }) {
   );
 }
 
-function ScoreRow({ label, value }) {
+function ScoreRow({ label, value, max }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
       <span style={{ opacity: 0.7 }}>{label}</span>
-      <span>{value} pts</span>
+      <span>{value}{max ? ` / ${max}` : ''} pts</span>
     </div>
   );
 }

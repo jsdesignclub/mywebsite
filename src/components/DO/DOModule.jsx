@@ -9,7 +9,7 @@ import EquipmentForm from './EquipmentForm';
 import { db, auth, storage } from '../../firebase';
 import { collection, addDoc, serverTimestamp, updateDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-
+import { calculateScore as computeAutomatedScore } from '../../utils/calculateScore';
 import { useAuth } from '../../context/AuthContext';
 
 const steps = [
@@ -110,59 +110,11 @@ function DOModule({ initialData, onComplete }) {
     });
   };
 
-  const calculateScore = async (data) => {
-    if (!data.personal || !data.business || !data.training || !data.production) return 0;
-    
-    // Fetch dynamic scoring policy
-    let policy = {
-      occupationWeights: { government: 0, semi_government: 1, ngo: 3, private: 4, self_employment: 5, other: 5 },
-      businessWeights: { namePoints: 10, licensePoints: 5, pointsPerEmployee: 1 },
-      eduWeights: { nvqPerLevel: 1, diploma: 5, bachelor: 10, masters: 15 },
-      expWeights: { pointsPerYear: 1 },
-      profitWeights: { bracket1: 1, bracket2: 2, bracket3: 3, bracket4: 4, bracket5: 5 }
-    };
-    
-    try {
-      const snap = await getDoc(doc(db, 'settings', 'scoring_policy'));
-      if (snap.exists()) policy = snap.data();
-    } catch (e) { console.error("Using default scoring rubric"); }
-
-    let score = 0;
-    
-    // 1. Occupation Points
-    const occ = data.personal.occupation;
-    if (occ) score += (policy.occupationWeights[occ] || 0);
-
-    // 2. Business Setup
-    if (data.business.businessName) score += policy.businessWeights.namePoints;
-    if (data.business.licenseNo) score += policy.businessWeights.licensePoints;
-    const employees = Number(data.business.employeeCount || 0);
-    score += (employees * policy.businessWeights.pointsPerEmployee);
-
-    // 3. Education & NVQ
-    if (data.training.nvqLevel && data.training.nvqLevel !== 'none') {
-      score += (Number(data.training.nvqLevel) * policy.eduWeights.nvqPerLevel);
+  const calculateScore = (data) => {
+    if (!data.personal || !data.business || !data.training || !data.production) {
+      return { totalScore: 0, breakdown: {} };
     }
-    
-    const deg = data.training.degree;
-    if (deg && policy.eduWeights[deg]) score += policy.eduWeights[deg];
-
-    // 4. Experience
-    const exp = Number(data.training.experienceYears || 0);
-    score += (exp * policy.expWeights.pointsPerYear);
-
-    // 5. Monthly Profit
-    const income = Number(data.production.estimatedIncome || 0);
-    const cost = Number(data.production.productionCost || 0);
-    const profit = income - cost;
-
-    if (profit > 100000) score += policy.profitWeights.bracket5;
-    else if (profit >= 75000) score += policy.profitWeights.bracket4;
-    else if (profit >= 50000) score += policy.profitWeights.bracket3;
-    else if (profit >= 25000) score += policy.profitWeights.bracket2;
-    else if (profit > 0) score += policy.profitWeights.bracket1;
-
-    return Math.round(score);
+    return computeAutomatedScore(data);
   };
 
   const handleSubmit = async () => {
@@ -201,7 +153,7 @@ function DOModule({ initialData, onComplete }) {
       }
 
       setSubmissionStatus('Calculating score...');
-      const applicationScore = await calculateScore(formData);
+      const { totalScore, breakdown } = calculateScore(formData);
       
       let policy = { percentage: 50, maxAmount: 100000 };
       try {
@@ -210,6 +162,20 @@ function DOModule({ initialData, onComplete }) {
       } catch (err) {}
 
       setSubmissionStatus('Finalizing...');
+
+      let initialStatus = 'pending_ds';
+      try {
+        const flowSnap = await getDoc(doc(db, 'settings', 'approval_flow'));
+        if (flowSnap.exists()) {
+          const flow = flowSnap.data();
+          if (flow.skipDsReview && flow.skipDirectorReview) {
+            initialStatus = 'approved_by_director';
+          } else if (flow.skipDsReview) {
+            initialStatus = 'pending_director';
+          }
+        }
+      } catch (err) {}
+
       const sanitizedData = JSON.parse(JSON.stringify({
         ...formData,
         equipment: {
@@ -221,8 +187,9 @@ function DOModule({ initialData, onComplete }) {
 
       const finalSubmission = {
         ...sanitizedData,
-        score: applicationScore,
-        status: 'pending_ds',
+        score: totalScore,
+        scoreBreakdown: breakdown,
+        status: initialStatus,
         division: userDivision || 'General',
         officer: {
           uid: auth.currentUser.uid,
